@@ -1,0 +1,8 @@
+*.o
+*.bin
+
+cross/*
+!cross/bin
+
+.build
+.vscode

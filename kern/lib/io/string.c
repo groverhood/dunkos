@@ -1,0 +1,46 @@
+#include <string.h>
+
+size_t strlen(const char *s)
+{
+	size_t result = 0;
+	while (*s++) {
+		result++;
+	}
+	return result;
+}
+
+char *strchr(const char *str, int chr)
+{
+	int c;
+	while ((c = *str) != chr) {
+		str++;
+		if (!c) {
+			return 0;
+		}
+	}
+
+	return (char *)str;
+}
+
+void *memcpy(void *dest, const void *src, size_t n)
+{
+	/* Naive approach. */
+	unsigned char *pdest = dest;
+	unsigned char *psrc = src;
+	while (n) {
+		*pdest++ = *psrc++;
+		n--;
+	}
+
+	return dest;
+}
+
+void *memset(void *dest, int val, size_t n)
+{
+	/* Naive approach. */
+	unsigned char *pdest = dest;
+	while (n) {
+		*pdest++ = val;
+	}
+	return dest;
+}
