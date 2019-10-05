@@ -1,8 +1,8 @@
 
 
-KERN_DIR = kern
+KERN_DIR = ./kern
 
-all: kern
+.PHONY: kern
 
 kern:
 	$(MAKE) -C $(KERN_DIR) run

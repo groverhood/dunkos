@@ -1,149 +1,162 @@
-
 #include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <console.h>
 #include <stdbool.h>
-#include <algo.h>
+#include <string.h>
+#include <console.h>
 
-enum format_flag {
-	FFLG_FLOAT,
-	FFLG_STR,
-	FFLG_CHR,
-	FFLG_ESCAPE,
-	FFLG_PTR,
-	FFLG_INT,
-	FFLG_SIZET
+#define FORMAT_INDICATOR_CHR ('%')
+
+enum format_data_type {
+	FMTDATA_INT,
+	FMTDATA_CHR,
+	FMTDATA_STR,
+	FMTDATA_FLT,
 };
 
-struct format_str_info {
-	enum format_flag flg;
-	int width;
-	int pad;
-	bool upper;
+struct format_arg_info {
+	
+	/**
+	 *  Generic members, usable in any context.
+	 **/
+	int width; /* Minimum width of the outputted format. */
+	int pad; /* Character to pad leftover width with. */
+	enum format_data_type data; /* Type of data to be written. */
 
-	// int writing
-	bool write_signed;
-	int size;
-	int base;
-
-	// float writing
-	bool exponential;
-};
-
-static size_t get_format_info(const char *fmt, struct format_str_info *info)
-{
-	// skip useless garbage
-	int chr = *++fmt;
-
-	if (isdigit(chr)) {
-		if (chr == '0') {
-			info->pad = '0';
-			fmt++;
-		}
-
+	/**
+	 *  Type-specific members, use DATA to determine
+	 *  which struct is appropiate.
+	 **/
+	union {
 		
+		/* INT data */
+		struct {
+			int size; /* %<int>, %l<int>, %ll<int> */
+			bool write_signed; /* %i, %d vs %u, %z */	
+			int base; /* %i, %o, %x */
+		};
+
+		/* FLOAT data */
+		struct {
+			bool exponential; /* Print in exponential format? */
+			bool hexponential; /* Print in hex exponential format? */
+		};
+
+	};
+};
+
+static void fmt_defaults(struct format_arg_info *out)
+{
+	out->width = 1;
+	out->pad = ' ';
+	out->data = FMTDATA_INT;
+}
+
+static char *read_format(const char *format, struct format_arg_info *pfarg)
+{
+	// skip delimeter
+	format++;
+
+
+	int chr = *format++;
+
+	switch (chr) {
+		case 'x': {
+			pfarg->data = FMTDATA_INT;
+
+			pfarg->size = sizeof(int);
+			pfarg->write_signed = false;
+			pfarg->base = 16;
+		} break;
+		case 'i': {
+			pfarg->data = FMTDATA_INT;
+
+			pfarg->size = sizeof(int);
+			pfarg->write_signed = true;
+			pfarg->base = 10;
+		} break;
+		case 'c': {
+			pfarg->data = FMTDATA_CHR;
+		} break;
 	}
+
+	return (char *)format;
 }
 
-static char *write_int(char *dest, const struct format_str_info *info, unsigned long long value)
-{
-	static const char digits[] = "0123456789abcdef";
-	
-	int transform = info->upper ? 32 : 0;
-	char rev_int[sizeof(unsigned long long) * 8];
-
-	int i, base;
-	base = info->base;
-
-	for (i = 0; i < sizeof(unsigned long long) * 8 && value > 0; ++i, value = value / base) {
-		rev_int[i] = digits[value % base];
-	}
-
-	int npadchrs = min(0, info->width - i);
-	int pad = info->pad;
-
-	while (npadchrs--) {
-		*dest++ = (char)pad;
-	} 
-
-	for (i = i - 1; i > -1; --i) {
-		int chr = rev_int[i];
-
-		if (isalpha(chr)) {
-			chr = chr + transform;
-		}
-
-		*dest++ = transform;
-	}
-}
-
-static char *write_float(char *dest, const struct format_str_info *info, double value)
+static char *write_int(char *dest, const struct format_arg_info *pfarg, va_list argv)
 {
 
 }
 
-static char *write_ptr(char *dest, const struct format_str_info *info, void *ptr)
+static char *write_format(char *dest, const struct format_arg_info *pfarg, va_list argv) 
 {
-	static const char digits[] = "0123456789abcdef";
-	size_t iptr = (size_t)ptr;
-	
-
-}
-
-static char* write_format(char *dest, const struct format_str_info *info, va_list argv)
-{
-	switch (info->flg) {
-	case FFLG_CHR: *dest++ = va_arg(argv, char); break;
-	case FFLG_ESCAPE: *dest++ = '%'; break;
-	case FFLG_FLOAT: dest = write_float(dest, info, va_arg(argv, double)); break;
-	case FFLG_INT: dest = write_int(dest, info, va_arg(argv, int)); break;
-	case FFLG_SIZET: dest = write_int(dest, info, va_arg(argv, size_t)); break;
-	case FFLG_PTR: dest = write_ptr(dest, info, va_arg(argv, void*)); break;
+	switch (pfarg->data) {
+	case FMTDATA_INT: dest = write_int(dest, pfarg, argv); break; 
+	case FMTDATA_CHR: {
+		int chr = va_arg(argv, int);
+		*dest++ = chr; 
+	} break;
+	case FMTDATA_STR: break; 
+	case FMTDATA_FLT: break;
 	}
 
 	return dest;
 }
 
-int vsprintf(char *dest, const char *fmt, va_list argv) {
+int vsprintf(char *dest, const char *format, va_list argv)
+{
+	struct format_arg_info farg;
+	int argc;
 	const char *fmt_start, *fmt_end;
 
-	fmt_start = fmt;
-	fmt_end = strchr(fmt, '%');
+	argc = 0;
+	fmt_start = format;
+	fmt_end = strchr(format, FORMAT_INDICATOR_CHR);
 
 	while (fmt_end) {
-		memcpy(dest, fmt_start, (fmt_end - fmt_start));
+		size_t off = (size_t)(fmt_end - fmt_start);
+		memcpy(dest, fmt_start, off);
+		dest = dest + off;
 
-		fmt_start = fmt_end;
+		fmt_defaults(&farg);
+		fmt_start = read_format(fmt_end, &farg);
+		dest = write_format(dest, &farg, argv);	
+		argc++;
 
-		struct format_str_info finfo;
-		size_t nread = get_format_info(fmt_start, &finfo);
-		dest = write_format(dest, &finfo, argv);
-
-		fmt_start = fmt_start + nread;
-
-		fmt_end = strchr(fmt_start, '%');
+		fmt_end = strchr(fmt_start, FORMAT_INDICATOR_CHR);
 	}
 
-	memcpy(dest, fmt_start, strlen(fmt_start) + 1);
+	size_t end = strlen(fmt_start);
 
-	return (fmt_end - fmt_start);
+	memcpy(dest, fmt_start, end);
+	dest[end] = 0;
+	return argc;
 }
 
-#define PBUF_SZ 0x100
+#define PRINTF_GBUFSZ (0x100)
 
-static char print_buf[PBUF_SZ];
-
-int printf(const char *fmt, ...) {
+int sprintf(char *dest, const char *format, ...)
+{
 	int argc;
-
 	va_list argv;
-	va_start(argv, fmt);
 
-	argc = vsprintf(print_buf, fmt, argv);
-
+	va_start(argv, format);
+	argc = vsprintf(dest, format, argv);
 	va_end(argv);
 
-	write_console(print_buf, strlen(print_buf));
+	return argc;
+}
+
+static char gbuf[PRINTF_GBUFSZ];
+
+int printf(const char *format, ...) 
+{
+	int argc;
+	va_list argv;
+
+	va_start(argv, format);
+	argc = vsprintf(gbuf, format, argv);
+	va_end(argv);
+
+	write_console(gbuf, strlen(gbuf));
+
 	return argc;
 }

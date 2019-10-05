@@ -1,9 +1,9 @@
 
 TARGET = x86_64-elf
 OPT_LVL = -O2
-LD = /home/dunix/docs/projects/dunkos/cross/bin/$(TARGET)-ld
-AS = /home/dunix/docs/projects/dunkos/cross/bin/$(TARGET)-as
-CC = /home/dunix/docs/projects/dunkos/cross/bin/$(TARGET)-gcc -c $(OPT_LVL)
+LD = ../cross/bin/$(TARGET)-ld
+AS = ../cross/bin/$(TARGET)-as
+CC = ../cross/bin/$(TARGET)-gcc -c $(OPT_LVL)
 BUILD_DIR = .build
 BOOT_DIR = bs
 
