@@ -38,7 +38,7 @@ void _idt_descriptor(int which, unsigned long offset, unsigned short selector, i
 
 void _init_idt(void) 
 {
-	_pidt.limit = ((_idt + INTR_COUNT) - _idt) * sizeof(struct idt_descriptor) - 1;
+	_pidt.limit = (INTR_COUNT) * sizeof(struct idt_descriptor) - 1;
 	_pidt.offset = (unsigned long)_idt;
 
 	memset(_idt, 0, sizeof(struct idt_descriptor) * INTR_COUNT);

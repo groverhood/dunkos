@@ -25,11 +25,11 @@ static void isr_common_stub(void);
 
 void init_interrupts(void)
 {
-	//_init_tss();
-	//_ltr();
-
 	_init_idt();
 	_lidt();
+
+	_init_tss();
+	_ltr();
 
 	intr_level = INTR_ENABLED;
 
@@ -68,6 +68,8 @@ enum interrupt_level set_interrupt_level(enum interrupt_level level)
 static void intr_default(struct interrupt_frame *intrframe)
 {
 	puts("Interrupt!");
+
+	while (1);
 }
 
 static void isr_common_stub(void)

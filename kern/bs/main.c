@@ -9,9 +9,9 @@
  **/
 void kernel(void)
 {
+	init_console();
 	init_interrupts();
 
-	init_console();
 	puts("Initialized console... printing \"Hello, world!\", and \"1, 2, 3\"");
 	puts("Hello, world!");
 	printf("%c, %c, %c\n", '1', '2', '3');

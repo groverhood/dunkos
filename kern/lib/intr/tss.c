@@ -1,4 +1,5 @@
 
+#include <stdio.h>
 #include <string.h>
 
 struct task_state_segment {
@@ -47,40 +48,29 @@ struct tss_descriptor {
 	unsigned       reserved;
 } __attribute__((packed));
 
-struct tss_reference {
-	unsigned short limit;
-	unsigned long offset;
-} __attribute__((packed));
-
 struct task_state_segment _tss;
-struct tss_descriptor _dtss;
-struct tss_reference _tssr;
+extern struct tss_descriptor gdt64tss;
 
 void _init_tss(void)
 {
-	memset(&_tss, 0, sizeof(struct task_state_segment));
 
 	unsigned long limit = sizeof(struct task_state_segment) - 1;
 	unsigned long base = (unsigned long)&_tss;
 
-	_dtss.limitl = (limit & 0xFFFF);
-	_dtss.basel = (base & 0xFFFF);
-	_dtss.basem1 = (base & 0xFF0000) >> 16;
-	_dtss.typeattr = 0x89;
-	_dtss.limith = ((limit & 0xF0000) >> 16) | 0x90;
-	_dtss.basem2 = (base & 0xFF000000) >> 24;
-	_dtss.baseh = (base >> 32);
-	_dtss.reserved = 0;
-
-	_tssr.limit = sizeof(struct tss_descriptor) - 1;
-	_tssr.offset = (unsigned long)&_dtss;
+	gdt64tss.limitl = (limit & 0xFFFF);
+	gdt64tss.basel = (base & 0xFFFF);
+	gdt64tss.basem1 = (base & 0xFF0000) >> 16;
+	gdt64tss.typeattr = 0x89;
+	gdt64tss.limith = ((limit & 0xF0000) >> 16);
+	gdt64tss.basem2 = (base & 0xFF000000) >> 24;
+	gdt64tss.baseh = (base >> 32);
 }
 
 void _ltr(void)
 {
-	__asm__ volatile (
+	__asm__ (
 		"ltr %0\n\t"
 		:
-		: "X" (_tssr)
+		: "X" (_tss)
 	);
 }
