@@ -39,7 +39,7 @@ void *memset(void *dest, int val, size_t n)
 {
 	/* Naive approach. */
 	unsigned char *pdest = dest;
-	while (n) {
+	while (n--) {
 		*pdest++ = val;
 	}
 	return dest;

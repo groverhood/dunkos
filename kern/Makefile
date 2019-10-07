@@ -3,7 +3,7 @@ TARGET = x86_64-elf
 OPT_LVL = -O2
 LD = ../cross/bin/$(TARGET)-ld
 AS = ../cross/bin/$(TARGET)-as
-CC = ../cross/bin/$(TARGET)-gcc -c $(OPT_LVL)
+CC = ../cross/bin/$(TARGET)-gcc -c $(OPT_LVL) -mgeneral-regs-only -mno-red-zone
 BUILD_DIR = .build
 BOOT_DIR = bs
 

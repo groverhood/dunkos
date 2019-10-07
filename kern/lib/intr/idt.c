@@ -42,7 +42,6 @@ void _init_idt(void)
 	_pidt.offset = (unsigned long)_idt;
 
 	memset(_idt, 0, sizeof(struct idt_descriptor) * INTR_COUNT);
-
 }
 
 void _lidt(void)

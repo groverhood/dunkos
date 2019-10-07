@@ -98,6 +98,14 @@ ssize_t write_console(void *buf, size_t count)
 		int chr = *bytes++;
 
 		switch (chr) {
+		case '\t': {
+			cell = (cell / 8 + 1) * 8;
+			int newcell = (cell % MAX_CELLS);
+			if (cell >= MAX_CELLS) {
+				newline();
+				cell = newcell;
+			}
+		} break;
 		case '\n': line++;
 		case '\r': cell = 0; break;
 		default: {

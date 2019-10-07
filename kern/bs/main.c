@@ -10,15 +10,14 @@
 void kernel(void)
 {
 	init_console();
+
+	puts("Initialized console... printing \"Hello, world!\"...");
+	puts("Hello, world!");
+
 	init_interrupts();
 
-	puts("Initialized console... printing \"Hello, world!\", and \"1, 2, 3\"");
-	puts("Hello, world!");
-	printf("%c, %c, %c\n", '1', '2', '3');
-
-	//volatile int x = 0;
-	//volatile int y = 1 / x;
-
+	__asm__ volatile ("movq $1, %rax");
+	__asm__ volatile ("int $2");
 	//puts("\nInitializing memory system...");
 	//init_memory();
 	//puts("Memory system initialized!");
