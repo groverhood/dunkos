@@ -16,8 +16,6 @@ void kernel(void)
 
 	init_interrupts();
 
-	__asm__ volatile ("movq $1, %rax");
-	__asm__ volatile ("int $2");
 	//puts("\nInitializing memory system...");
 	//init_memory();
 	//puts("Memory system initialized!");

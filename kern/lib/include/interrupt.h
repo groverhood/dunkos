@@ -71,7 +71,19 @@ struct interrupt_frame {
 	unsigned long ss;
 };
 
-typedef intr_void interrupt_handler(struct interrupt_frame *);
+struct interrupt;
+
+typedef void interrupt_handler(struct interrupt *, 
+									struct interrupt_frame *,
+									struct register_state *);
+
+/* Tertiary structure which contains "user"-friendly information
+   about the interrupt. */
+struct interrupt {
+	const char *name;
+	enum interrupt_type id;
+	interrupt_handler *handler;
+};
 
 enum interrupt_level disable_interrupts(void);
 

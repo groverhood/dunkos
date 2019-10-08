@@ -13,8 +13,9 @@ KERN_SUB_DEPS = mb.o boot.o page_enable.o gdt.o long.o main.o
 KERN_SUB_OBJECTS = $(foreach o, $(KERN_SUB_DEPS), $(BUILD_DIR)/$(o))
 KERN_OBJECT = $(BUILD_DIR)/kern.o
 
-LIB_SOURCES = $(shell find ./lib -regex .*\.c -type f -print)
-LIB_SUB_OBJECTS = $(foreach o, $(LIB_SOURCES:%.c=%.o), $(BUILD_DIR)/$(notdir $(o)))
+LIB_CSOURCES = $(shell find ./lib -regex .*\.c -type f -print)
+LIB_SSOURCES = $(shell find ./lib -regex .*\.s -type f -print)
+LIB_SUB_OBJECTS = $(foreach o, $(LIB_CSOURCES:%.c=%.o) $(LIB_SSOURCES:%.s=%.o), $(BUILD_DIR)/$(notdir $(o)))
 LIB_OBJECT = $(BUILD_DIR)/lib.o
 
 all: fresh image clean
@@ -61,12 +62,16 @@ main.o:
 # === BEGIN LIB MAKE  ===
 # =======================
 
-lib-object: $(LIB_SOURCES:%.c=%.o)
+lib-object: $(LIB_CSOURCES:%.c=%.o) $(LIB_SSOURCES:%.s=%.o)
 	ld -o $(LIB_OBJECT) -r $(LIB_SUB_OBJECTS)
-	rm -vf $(LIB_SOURCES:%.c=%.o)
+	rm -vf $(LIB_CSOURCES:%.c=%.o)
 
 %.o: %.c
 	$(CC) -o $(BUILD_DIR)/$(notdir $@) $(LIB_INCLUDES) $(OPT_LVL) $< 
+
+%.o: %.s
+	$(AS) -o $(BUILD_DIR)/$(notdir $@) $<
+	
 
 # =======================
 # ===  END LIB MAKE   ===

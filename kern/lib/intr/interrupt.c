@@ -8,28 +8,22 @@ extern void _ltr(void);
 extern void _init_idt(void);
 extern void _lidt(void);
 
-typedef interrupt_handler intr_stub;
-
-extern void _idt_descriptor(int which, unsigned long offset, unsigned short selector, int flags);
+extern void _install_stubs(void);
 extern bool _enable_apic(void);
-
-/* Tertiary structure which contains "user"-friendly information
-   about the interrupt. */
-struct interrupt {
-	const char *name;
-	enum interrupt_type id;
-
-	intr_stub *stub;
-};
 
 static struct interrupt intr_table[INTR_COUNT];
 static enum interrupt_level intr_level;
+static int intr_index;
+static bool isr_init;
+static interrupt_handler intr_default;
 
-static void intr_default(struct interrupt_frame *intrframe);
-static void isr_common_stub(struct interrupt_frame *intrframe);
+extern void isr_stub0(void *);
 
 void init_interrupts(void)
 {
+	isr_init = true;
+	intr_index = 0;
+
 	_init_idt();
 	_lidt();
 
@@ -44,15 +38,16 @@ void init_interrupts(void)
 		puts("Enabled APIC...");
 	}
 
+	_install_stubs();
+
 	int i;
 	for (i = 0; i < INTR_COUNT; ++i) {
 		intr_table[i].id = i;
 		intr_table[i].name = "Unknown interrupt";
-		install_interrupt_handler(i, &isr_common_stub);
+		intr_table[i].handler = &intr_default;
 	}
 
 	intr_table[INTR_TYPE_DIV0].name = "Division by zero";
-
 	intr_level = INTR_ENABLED;
 }
 
@@ -77,24 +72,25 @@ enum interrupt_level set_interrupt_level(enum interrupt_level level)
 	return old_level;
 }
 
-extern struct task_state_segment _tss;
+static void intr_default(struct interrupt *intr, 
+						 struct interrupt_frame *intrframe,
+						 struct register_state *registers)
+{
+	printf("Unhandled interrupt: 0x%x\n", intr->id);
+}
 
-static intr_void isr_common_stub(struct interrupt_frame *intrframe)
+void isr_common_stub(unsigned long intr, struct interrupt_frame *intrframe,
+					 struct register_state *registers)
 {
 	enum interrupt_level old_level;
-	struct register_state *registers;
-
 	old_level = set_interrupt_level(INTR_CONTEXT);
-
-	__asm__ ("movq %%rsp, %0"
-		     : "=r" (registers));
-
+	intr_table[intr].handler(intr_table + intr, intrframe, registers);
 	set_interrupt_level(old_level);
 }
 
 void install_interrupt_handler(enum interrupt_type which, interrupt_handler *handler)
 {
-	_idt_descriptor(which, (unsigned long)handler, 0x08, 0x8E);
+	intr_table[which].handler = handler;
 }
 
 void dump_intrfame(struct interrupt_frame *intrframe, 
