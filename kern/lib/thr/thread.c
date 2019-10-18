@@ -1,29 +1,74 @@
 
+#include <kern/paging.h>
 #include <kern/thread.h>
+#include <kern/synch.h>
 
 static struct list ready_threads;
 static struct thread *running_thread;
 static struct thread *idle_thread;
 static tid_t next_tid;
 
+static struct list free_threads;
+
 static list_comparator thread_priority_highest;
 static tid_t assign_id(void);
+static struct thread_entry *find_free_thread(void);
+static struct thread *thread_alloc(void);
 
 extern void *kernel_page_top;
 
+struct thread_entry {
+	void *thr;
+	bool marked_free;
+} threadpool[PML4_COUNT];
+
+static void init_threadpool(void)
+{
+	struct thread *kernel_threadp_top;
+	size_t i;
+
+	kernel_threadp_top = kernel_page_top;
+	i = PML4_COUNT;
+
+	while (i-- > 0) {
+		struct thread_entry *te = (threadpool + i);
+		te->thr = (--kernel_threadp_top);
+		te->marked_free = true;
+	}
+}
 
 void init_threads(void)
 {
-	*((int *)kernel_page_top - 1) = 0;
-
+	struct thread *main_thread;
 	next_tid = 0;
+
+	init_threadpool();
+
+	main_thread = thread_alloc();
+	init_thread(main_thread);
+
+	running_thread = main_thread;
+}
+
+static struct thread_entry *find_free_thread(void)
+{
+
+}
+
+static struct thread *thread_alloc(void)
+{	
+	struct thread_entry *te = find_free_thread();
+	te->marked_free = false;
+
+	struct thread *thr = te->thr;
+	return thr;
 }
 
 void create_thread(struct thread **dest, thread_function *fn, void *aux)
 {
 	struct thread *newthr;
 
-	
+	newthr = thread_alloc();
 }
 
 void init_thread(struct thread *thr)
@@ -33,6 +78,8 @@ void init_thread(struct thread *thr)
 	thr->priority = PRI_DEFAULT;
 	thr->sleep_end = -1;
 	thr->id = assign_id();
+
+	sema_init(&thr->sleep_sema, 0);
 }
 
 struct thread *get_current_thread(void)

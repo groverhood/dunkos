@@ -2,6 +2,7 @@
 #define DUNKOS_THREAD_H
 
 #include <stddef.h>
+#include <stdbool.h>
 #include <interrupt.h>
 #include <util/list.h>
 #include <kern/synch.h>
@@ -31,6 +32,9 @@ struct thread {
 	struct list_elem status_elem;
 	struct list_elem sleep_elem;
 	struct list_elem donor_elem;
+	struct list_elem child_elem;
+
+	struct list children;
 
 	size_t *pagedir;
 	void *ip;

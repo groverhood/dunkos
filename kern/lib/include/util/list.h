@@ -56,6 +56,11 @@ static inline struct list_elem *list_next(struct list_elem *el)
 	return el->next;
 }
 
+static inline bool isolated_elem(struct list_elem *el)
+{
+	return el->prev == NULL && el->next != NULL;
+}
+
 struct list_elem *list_begin(struct list *);
 struct list_elem *list_end(struct list *);
 
