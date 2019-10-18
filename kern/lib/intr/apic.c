@@ -4,6 +4,14 @@
 
 #define ENABLE_X2APIC (1 << 11)
 
+void _enable_apic_timer(void)
+{
+	__asm__ volatile (
+		"movl $0xFEE003E0, %ecx\n\t"
+		""
+	);
+}
+
 bool _enable_apic(void)
 {
 	int cpuid_retval;

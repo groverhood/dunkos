@@ -4,7 +4,6 @@
 #include <stdbool.h>
 
 #define INTR_COUNT (0x100)
-#define intr_void void __attribute__((interrupt))
 
 void init_interrupts(void);
 
@@ -15,7 +14,9 @@ enum interrupt_level {
 };
 
 enum interrupt_type {
-	INTR_TYPE_DIV0
+	INTR_TYPE_DIV0,
+	INTR_TYPE_PGFAULT = 14,
+	INTR_TYPE_TIMER = 0x20,
 };
 
 struct task_state_segment {
@@ -63,7 +64,7 @@ struct register_state {
 	unsigned long r8, r9, r10, r11;
 };
 
-struct interrupt_frame {
+struct benign_interrupt_frame {
 	unsigned long rip;
 	unsigned long cs;
 	unsigned long rflags;
@@ -71,11 +72,28 @@ struct interrupt_frame {
 	unsigned long ss;
 };
 
+struct fault_interrupt_frame {
+	unsigned long error;
+	unsigned long rip;
+	unsigned long cs;
+	unsigned long rflags;
+	unsigned long rsp;
+	unsigned long ss;
+};
+
+/** 
+ * 	Action we wish to defer to after restoring
+ * 	pre-interrupt state.
+ **/
+enum interrupt_defer {
+	INTRDEFR_NONE,
+	INTRDEFR_SCHEDULE
+};
+
 struct interrupt;
 
-typedef void interrupt_handler(struct interrupt *, 
-									struct interrupt_frame *,
-									struct register_state *);
+typedef enum interrupt_defer interrupt_handler(struct interrupt *, void *,
+											   struct register_state *);
 
 /* Tertiary structure which contains "user"-friendly information
    about the interrupt. */
@@ -91,9 +109,6 @@ enum interrupt_level get_interrupt_level(void);
 enum interrupt_level set_interrupt_level(enum interrupt_level level);
 
 void install_interrupt_handler(enum interrupt_type which, interrupt_handler *handler);
-
-void dump_intrfame(struct interrupt_frame *intrframe, 
-				   struct register_state *registers);
 
 bool in_interrupt(void);
 

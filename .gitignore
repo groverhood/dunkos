@@ -6,3 +6,4 @@ cross/*
 
 .build
 .vscode
+.ref

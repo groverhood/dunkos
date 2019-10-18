@@ -3,6 +3,7 @@
 .code32
 .extern gdt64p
 .extern gdt64data
+.extern prep_paging_ia32
 .global _start
 
 _start:
@@ -11,9 +12,7 @@ _start:
 	call check_multiboot
 	call check_cpuid
 	call check_long_mode
-
-	call set_up_page_tables
-	call enable_paging
+	call prep_paging_ia32
 	
 	lgdt (gdt64p)
 
@@ -80,18 +79,22 @@ error:
 	hlt
 
 .section .bss
-.align 4096
+.global pml4_table
+.global pdp_table
+.global pagedir_table
 
-.global p4_table
-.global p3_table
-.global p2_table
+.align 0x1000
+pml4_table:
+.space 0x1000
 
-p4_table:
-.space 4096
-p3_table:
-.space 4096
-p2_table:
-.space 4096
+.align 0x1000
+pdp_table:
+.space 0x1000
+
+.align 0x1000
+pagedir_table:
+.space 0x1000
+
 stack_bottom:
-.space 8192
+.space 0x2000
 stack_top:

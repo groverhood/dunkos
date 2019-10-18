@@ -7,17 +7,17 @@ SECTIONS
 
     .text : {
         *(.boot);
-        *(.text)
+        *(.text);
         _etext = .;
     }
 
     .data : {
-        *(.data)
+        *(.data);
         _edata = .;
     }
 
     .bss : {
-        *(.bss)
+        *(.bss);
         _end = .;
     }
 }

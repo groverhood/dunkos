@@ -9,7 +9,7 @@ BOOT_DIR = bs
 
 LIB_INCLUDES = -Ilib/include
 
-KERN_SUB_DEPS = mb.o boot.o page_enable.o gdt.o long.o main.o
+KERN_SUB_DEPS = mb.o boot.o gdt.o long.o main.o ia32page.o
 KERN_SUB_OBJECTS = $(foreach o, $(KERN_SUB_DEPS), $(BUILD_DIR)/$(o))
 KERN_OBJECT = $(BUILD_DIR)/kern.o
 
@@ -42,9 +42,6 @@ mb.o:
 boot.o:
 	$(AS) -o $(BUILD_DIR)/boot.o $(BOOT_DIR)/boot.s
 
-page_enable.o:
-	$(AS) -o $(BUILD_DIR)/page_enable.o $(BOOT_DIR)/page_enable.s
-
 gdt.o:
 	$(AS) -o $(BUILD_DIR)/gdt.o $(BOOT_DIR)/gdt.s
 
@@ -53,6 +50,9 @@ long.o:
 
 main.o:
 	$(CC) -o $(BUILD_DIR)/main.o $(LIB_INCLUDES) $(BOOT_DIR)/main.c
+
+ia32page.o:
+	$(AS) -o $(BUILD_DIR)/ia32page.o $(LIB_INCLUDES) $(BOOT_DIR)/ia32page.s
 
 # =======================
 # ===  END BOOT MAKE  ===

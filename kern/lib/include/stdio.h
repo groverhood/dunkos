@@ -12,4 +12,6 @@ int sprintf(char *dest, const char *format, ...);
 
 int printf(const char *format, ...);
 
+int putchar(int c);
+
 #endif

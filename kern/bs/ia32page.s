@@ -1,39 +1,40 @@
 
 .section .text
 .code32
-.global enable_paging
-.global set_up_page_tables
-.extern p2_table
-.extern p3_table
-.extern p4_table
+.global prep_paging_ia32
+.extern pml4_table
+.extern pdp_table
+.extern pagedir_table
 
 set_up_page_tables:
-	movl $p3_table, %eax
+	movl $pdp_table, %eax
 	orl $0x03, %eax
-	movl %eax, (p4_table)
+	movl %eax, (pml4_table)
 
-	movl $p2_table, %eax
+	movl $pagedir_table, %eax
 	orl $0x03, %eax
-	movl %eax, (p3_table)
+	movl %eax, (pdp_table)
 	
 	movl $0, %ecx
-	.map_p2_table:
+	.map_pagedir_table:
 		movl %ecx, %eax
 		shll $21, %eax
 		orl $0x83, %eax
-		movl %eax, p2_table(, %ecx, 8)
+		movl %eax, pagedir_table(, %ecx, 8)
 		addl $1, %ecx
 		cmpl $0x200, %ecx
-		jl .map_p2_table
+		jl .map_pagedir_table
 
 	ret
 
-enable_paging:
+prep_paging_ia32:
+	call set_up_page_tables
+
 	movl %cr0, %eax
 	andl $(~(1 << 31)), %eax
 	movl %eax, %cr0
-
-	movl $p4_table, %eax
+	
+	movl $pml4_table, %eax
 	movl %eax, %cr3
 
 	movl %cr4, %eax
@@ -50,3 +51,4 @@ enable_paging:
 	movl %eax, %cr0
 
 	ret
+

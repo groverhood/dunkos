@@ -72,35 +72,26 @@ enum interrupt_level set_interrupt_level(enum interrupt_level level)
 	return old_level;
 }
 
-static void intr_default(struct interrupt *intr, 
-						 struct interrupt_frame *intrframe,
+static enum interrupt_defer intr_default(struct interrupt *intr, 
+						 void *intrframe_,
 						 struct register_state *registers)
 {
 	printf("Unhandled interrupt: 0x%x\n", intr->id);
+	return INTRDEFR_NONE;
 }
 
-void isr_common_stub(unsigned long intr, struct interrupt_frame *intrframe,
+void isr_common_stub(unsigned long intr, void *intrframe_,
 					 struct register_state *registers)
 {
 	enum interrupt_level old_level;
 	old_level = set_interrupt_level(INTR_CONTEXT);
-	intr_table[intr].handler(intr_table + intr, intrframe, registers);
+	intr_table[intr].handler(intr_table + intr, intrframe_, registers);
 	set_interrupt_level(old_level);
 }
 
 void install_interrupt_handler(enum interrupt_type which, interrupt_handler *handler)
 {
 	intr_table[which].handler = handler;
-}
-
-void dump_intrfame(struct interrupt_frame *intrframe, 
-				   struct register_state *registers)
-{ 
-	printf("%%rip:\t%lx\n", intrframe->rip);
-	printf("%%cs:\t%lx\n", intrframe->cs);
-	printf("rflags:\t%lx\n", intrframe->rflags);
-	printf("%%rsp:\t%lx\n", intrframe->rsp);
-	printf("%%ss:\t%lx\n", intrframe->ss);
 }
 
 bool in_interrupt(void)

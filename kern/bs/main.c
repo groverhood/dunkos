@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <console.h>
 #include <interrupt.h>
-#include <memory.h>
+#include <kern/memory.h>
+#include <kern/timer.h>
+#include <kern/thread.h>
 
 /**
  *  Initialize kernel state and begin OS process.
@@ -16,7 +18,10 @@ void kernel(void)
 
 	init_interrupts();
 
-	//puts("\nInitializing memory system...");
-	//init_memory();
-	//puts("Memory system initialized!");
+	puts("\nInitializing memory system...");
+	init_memory();
+	puts("Memory system initialized!");
+
+	init_threads();
+	init_timer();
 }
