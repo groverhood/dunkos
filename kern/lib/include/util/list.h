@@ -23,7 +23,7 @@ static inline size_t list_size(const struct list *li)
 
 static inline bool list_empty(const struct list *li)
 {
-	return list_size(li) > 0;
+	return list_size(li) == 0;
 }
 
 #define elem_value(el, ty, nm) ((ty *)((size_t)(el) - offsetof(ty, nm))) 

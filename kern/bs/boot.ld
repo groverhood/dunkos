@@ -4,12 +4,15 @@ SECTIONS
 {
     
     . = 1M;
+    _begin = .;
 
     .text : {
         *(.boot);
         *(.text);
         _etext = .;
     }
+
+    . = 2M;
 
     .data : {
         *(.data);
@@ -20,4 +23,10 @@ SECTIONS
         *(.bss);
         _end = .;
     }
+
+    . = 4M;
+    _pool_begin = .;
+
+    . = 6M;
+    _reserved_end = .;
 }

@@ -146,6 +146,7 @@ static char *read_format(const char *format, struct format_arg_info *pfarg)
 	pfarg->base = 10;
 
 	switch (chr) {
+		case 'p': pfarg->alternate_form = true;
 		case 'X': pfarg->upper_digits = true;
 		case 'x': pfarg->base = 16;
 		case 'o': {
@@ -180,7 +181,7 @@ static char *read_format(const char *format, struct format_arg_info *pfarg)
 		} break;
 		case '%': {
 			pfarg->data = FMTDATA_ESC;
-		}
+		} break;
 	}
 
 	return (char *)format;
@@ -234,12 +235,20 @@ static char *write_int(char *dest, const struct format_arg_info *pfarg, va_list 
 	int pad = pfarg->pad;
 	
 	if (pfarg->align == FMTALGN_LEFT) {
+		if (pfarg->alternate_form) {
+			if (pfarg->base == 16) {
+				*dest++ = '0';
+				*dest++ = 'x';
+				npadchrs -= 2;
+			}
+		}
+
 		while (npadchrs > 1) {
 			*dest++ = pad;
 			npadchrs--;
 		}
 
-		if (npadchrs) {
+		if (npadchrs && pfarg->write_signed) {
 			switch (pfarg->sign_pad) {
 				case ' ': *dest++ = (negative) ? '-' : ' '; break;
 				case '+': *dest++ = (negative) ? '-' : '+'; break;

@@ -17,51 +17,36 @@ static struct thread *thread_alloc(void);
 
 extern void *kernel_page_top;
 
-struct thread_entry {
-	void *thr;
-	bool marked_free;
-} threadpool[PML4_COUNT];
-
 static void init_threadpool(void)
 {
-	struct thread *kernel_threadp_top;
-	size_t i;
+	// struct thread *kernel_threadp_top;
+	// size_t i;
 
-	kernel_threadp_top = kernel_page_top;
-	i = PML4_COUNT;
+	// kernel_threadp_top = kernel_page_top;
+	// i = PML4_COUNT;
 
-	while (i-- > 0) {
-		struct thread_entry *te = (threadpool + i);
-		te->thr = (--kernel_threadp_top);
-		te->marked_free = true;
-	}
+	// while (i-- > 0) {
+	// 	struct thread_entry *te = (threadpool + i);
+	// 	te->thr = (--kernel_threadp_top);
+	// 	te->marked_free = true;
+	// }
 }
 
 void init_threads(void)
 {
-	struct thread *main_thread;
-	next_tid = 0;
+	// struct thread *main_thread;
+	// next_tid = 0;
 
-	init_threadpool();
+	// init_threadpool();
 
-	main_thread = thread_alloc();
-	init_thread(main_thread);
+	// main_thread = thread_alloc();
+	// init_thread(main_thread);
 
-	running_thread = main_thread;
-}
-
-static struct thread_entry *find_free_thread(void)
-{
-
+	// running_thread = main_thread;
 }
 
 static struct thread *thread_alloc(void)
 {	
-	struct thread_entry *te = find_free_thread();
-	te->marked_free = false;
-
-	struct thread *thr = te->thr;
-	return thr;
 }
 
 void create_thread(struct thread **dest, thread_function *fn, void *aux)
@@ -79,7 +64,7 @@ void init_thread(struct thread *thr)
 	thr->sleep_end = -1;
 	thr->id = assign_id();
 
-	sema_init(&thr->sleep_sema, 0);
+	semaphore_init(&thr->sleep_sema, 0);
 }
 
 struct thread *get_current_thread(void)
@@ -122,7 +107,7 @@ void yield_current(void)
 {
 	struct thread *current_thread = get_current_thread();
 	if (current_thread->status != THRSTAT_BLOCKED) {
-		list_push_back(&ready_threads, current_thread);
+		list_push_back(&ready_threads, &current_thread->status_elem);
 	}
 
 	schedule_next();
@@ -221,11 +206,46 @@ void semaphore_dec(struct semaphore *sema)
 	set_interrupt_level(old_level);
 }
 
-void lock_init(struct lock *);
-void lock_acquire(struct lock *);
-void lock_release(struct lock *);
+void lock_init(struct lock *l)
+{
+	semaphore_init(&l->binary, 1);
+	l->holder = NULL;
+}
 
-void condvar_init(struct condvar *);
-void condvar_wait(struct condvar *, struct lock *);
-void condvar_signal_one(struct condvar *, struct lock *);
-void condvar_signal_all(struct condvar *, struct lock *);
+void lock_acquire(struct lock *l)
+{
+	semaphore_dec(&l->binary);
+	l->holder = get_current_thread();
+}
+
+void lock_release(struct lock *l)
+{
+	l->holder = NULL;
+	semaphore_inc(&l->binary);
+}
+
+void condvar_init(struct condvar *c)
+{
+	list_init(&c->waiters);
+}
+
+void condvar_wait(struct condvar *c, struct lock *l)
+{
+	lock_release(l);
+	list_push_back(&c->waiters, &get_current_thread()->status_elem);
+	block_current();
+	lock_acquire(l);
+}
+
+void condvar_signal_one(struct condvar *c, struct lock *l)
+{
+	lock_release(l);
+	list_push_back(&ready_threads, list_pop_front(&c->waiters));
+	lock_acquire(l);
+}
+
+void condvar_signal_all(struct condvar *c, struct lock *l)
+{
+	while (!list_empty(&c->waiters))
+		condvar_signal_one(c, l);
+}
