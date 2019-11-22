@@ -4,8 +4,8 @@ export PREFIX=$(pwd)
 export TARGET=x86_64-elf
 export PATH="$PREFIX/bin:$PATH"
 
-wget -q -N https://ftp.gnu.org/gnu/binutils/binutils-2.32.tar.gz
-tar -zxf binutils-2.32.tar.gz
+wget- https://ftp.gnu.org/gnu/binutils/binutils-2.32.tar.gz
+tar -zxvf binutils-2.32.tar.gz
 
 mkdir build-binutils
 cd build-binutils
@@ -15,8 +15,8 @@ make install
 
 cd ..
 
-wget -q -N https://ftp.gnu.org/gnu/gcc/gcc-9.2.0/gcc-9.2.0.tar.gz
-tar -zxf gcc-9.2.0.tar.gz
+wget https://ftp.gnu.org/gnu/gcc/gcc-9.2.0/gcc-9.2.0.tar.gz
+tar -zxvf gcc-9.2.0.tar.gz
 
 mkdir build-gcc
 cd build-gcc
