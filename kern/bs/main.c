@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <console.h>
 #include <interrupt.h>
+#include <kern/pml4.h>
 #include <kern/memory.h>
 #include <kern/paging.h>
 #include <kern/timer.h>
@@ -21,11 +22,10 @@ void kernel(void)
 	init_interrupts();
 
 	puts("\nInitializing memory system...");
+	init_pml4();
 	init_paging();
 	init_heap();
 	puts("Memory system initialized!");
-
-	printf("%p %p\n", malloc(4));
 
 	// init_threads();
 	// init_timer();

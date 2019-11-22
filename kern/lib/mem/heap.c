@@ -70,7 +70,7 @@ void *malloc(size_t size)
 		} else {
 			d = (descriptors + i);
 
-			//lock_acquire(&d->desc_lock);
+			lock_acquire(&d->desc_lock);
 
 			if (list_empty (&d->free_list)) {
 				a = page_allocate(PAL_ZERO);
@@ -85,11 +85,11 @@ void *malloc(size_t size)
 				}
 			}
 
-			b = elem_value(list_pop_back(&d->free_list), struct heap_block, free_elem);
+			b = elem_value(list_pop_front(&d->free_list), struct heap_block, free_elem);
 			a = block_get_arena(b);
 			a->free_count--;
 
-			//lock_release(&d->desc_lock);
+			lock_release(&d->desc_lock);
 		}
 	}
 	
@@ -104,7 +104,22 @@ void *calloc(size_t nmemb, size_t size)
 
 void free(void *p)
 {
+	struct heap_block *b = p;
+	struct heap_arena *a = block_get_arena(p);
+	struct heap_desc *d = a->desc;
+	lock_acquire(&d->desc_lock);
 
+	a->free_count++;
+	if (a->free_count == d->arena_size) {
+		size_t block;
+		for (block = 0; block < d->arena_size; ++block)
+			list_remove(&d->free_list, &arena_get_block(a, block)->free_elem);
+
+		page_free(a);
+	} else 
+		list_push_back(&d->free_list, &b->free_elem);
+
+	lock_release(&d->desc_lock);
 }
 
 static struct heap_arena *block_get_arena(struct heap_block *b)

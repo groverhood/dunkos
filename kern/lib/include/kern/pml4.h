@@ -5,10 +5,11 @@
 #include <stdbool.h>
 
 size_t *pml4_alloc(void);
+size_t *get_default_pml4(void);
 void pml4_activate(size_t *);
 void pml4_destroy(size_t *);
 
-size_t *pml4_map_address_buffer(size_t *pml4, void *addr, void *frame, size_t *buf);
+void pml4_map_address_buffer(size_t *pml4, void *addr, void *frame);
 void pml4_map_address(size_t *pml4, void *addr, void *frame);
 
 void pml4_set_writable(size_t *pml4, void *addr, bool writable);

@@ -33,8 +33,6 @@ enum interrupt_defer page_fault(struct interrupt *intr,
 	size_t *pml4 = get_pml4();
 
 	if (!(error & 0x1)) {
-		printf ("Uh oh: %lx\n", faultaddr);
-		__asm__ volatile ("hlt");
 		pml4_map_address(pml4, page_round_down(faultaddr), page_allocate(0));
 	}
 
@@ -42,11 +40,6 @@ enum interrupt_defer page_fault(struct interrupt *intr,
 }
 
 extern void prep_paging_ia32e(void);
-
-size_t *get_default_pml4(void)
-{
-	return default_pml4;
-}
 
 struct page_pool {
 	size_t pages;
@@ -67,15 +60,11 @@ static struct page_pool user_pool;
 
 /* The end of the kernel static data segment. */
 static uintptr_t reserved_end;
-static size_t *base_pt_pool;
+
 
 void init_paging(void)
 {
 	extern size_t _reserved_end;
-	extern size_t _pool_begin;
-
-	__asm__ ("movq %%cr3, %0" : "=r" (default_pml4));
-	base_pt_pool = &_pool_begin;
 	reserved_end = (uintptr_t)&_reserved_end;
 
 	/* Number of pages excluding those reserved for the kernel. */
@@ -87,6 +76,14 @@ void init_paging(void)
 	printf("Kernel page base: %p\n", base);
 	printf("User page base: %p\n", base + kernel_pages * PAGESIZE);
 	install_interrupt_handler(INTR_TYPE_PGFAULT, &page_fault);	
+
+
+	size_t pgno;
+	for (pgno = 0; pgno < total_pages; ++pgno) {
+		uint8_t *kernaddr = base + pgno * PAGESIZE;
+		pml4_map_address_buffer(get_default_pml4(), 
+					kernaddr, kernel_to_phys(kernaddr));
+	}
 	
 	page_pool_init(&kernel_pool, kernel_pages, base);
 	page_pool_init(&user_pool, user_pages, base + kernel_pages * PAGESIZE);
@@ -119,11 +116,6 @@ static void page_pool_init(struct page_pool *p, size_t pages, void *base)
 	uint8_t *page_base = (uint8_t *)base + pages * PAGESIZE;
 	size_t bmap_page;
 	size_t *pml4 = get_default_pml4();
-	
-	for (bmap_page = 0; bmap_page < bitmap_pages; ++bmap_page) {
-		void *pg = (uint8_t *)base + PAGESIZE * bmap_page;
-		base_pt_pool = pml4_map_address_buffer(pml4, pg, kernel_to_phys(pg), base_pt_pool);
-	}
 
 	p->occupancy_map = bitmap_create_buffer(pages, base, pages);
 	p->base = (uint8_t *)base + bitmap_pages * PAGESIZE;
