@@ -5,7 +5,6 @@
 #include <kern/pml4.h>
 #include <kern/memory.h>
 #include <kern/paging.h>
-#include <kern/timer.h>
 #include <kern/thread.h>
 #include <kern/heap.h>
 
@@ -27,6 +26,7 @@ void kernel(void)
 	init_heap();
 	puts("Memory system initialized!");
 
-	// init_threads();
-	// init_timer();
+	init_threads();
+
+	exit_thread();
 }

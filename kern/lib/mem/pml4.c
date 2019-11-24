@@ -8,6 +8,7 @@
 static size_t *base_pt_pool;
 static size_t *default_pml4;
 
+
 void init_pml4(void)
 {
 	extern size_t _pool_begin;

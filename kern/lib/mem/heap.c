@@ -10,6 +10,7 @@
 #include <string.h>
 #include <kern/synch.h>
 #include <kern/paging.h>
+#include <kern/thread.h>
 #include <util/list.h>
 
 struct heap_desc {
@@ -19,6 +20,22 @@ struct heap_desc {
 	struct list free_list;
 	struct lock desc_lock;
 };
+
+/* Acquire the descriptor lock if we have multiprogramming
+   enabled. */
+static inline void desc_lock_acquire(struct heap_desc *d)
+{
+	if (threads_init)
+		lock_acquire(&d->desc_lock);
+}
+
+/* Release the descriptor lock if we have multiprogramming
+   available. */
+static inline void desc_lock_release(struct heap_desc *d)
+{
+	if (threads_init)
+		lock_release(&d->desc_lock);
+}
 
 /* Magic number for detecting arena corruption. */
 #define ARENA_MAGIC 0x9a548eed
@@ -70,7 +87,7 @@ void *malloc(size_t size)
 		} else {
 			d = (descriptors + i);
 
-			lock_acquire(&d->desc_lock);
+			desc_lock_acquire(d);
 
 			if (list_empty (&d->free_list)) {
 				a = page_allocate(PAL_ZERO);
@@ -86,10 +103,11 @@ void *malloc(size_t size)
 			}
 
 			b = elem_value(list_pop_front(&d->free_list), struct heap_block, free_elem);
+			memset(b, 0, d->block_size);
 			a = block_get_arena(b);
 			a->free_count--;
 
-			lock_release(&d->desc_lock);
+			desc_lock_release(d);
 		}
 	}
 	
@@ -98,8 +116,10 @@ void *malloc(size_t size)
 
 void *calloc(size_t nmemb, size_t size)
 {
-	size_t alloc_size = nmemb * size;
-	return memset(malloc(alloc_size), 0, alloc_size);
+	/* By virtue of memory management, we will always
+	   zero out kernel pages upon allocation, and heap
+	   blocks upon calls to malloc(). */
+	return malloc(nmemb * size);
 }
 
 void free(void *p)
@@ -107,7 +127,7 @@ void free(void *p)
 	struct heap_block *b = p;
 	struct heap_arena *a = block_get_arena(p);
 	struct heap_desc *d = a->desc;
-	lock_acquire(&d->desc_lock);
+	desc_lock_acquire(d);
 
 	a->free_count++;
 	if (a->free_count == d->arena_size) {
@@ -116,10 +136,11 @@ void free(void *p)
 			list_remove(&d->free_list, &arena_get_block(a, block)->free_elem);
 
 		page_free(a);
-	} else 
+	} else {
 		list_push_back(&d->free_list, &b->free_elem);
+	}
 
-	lock_release(&d->desc_lock);
+	desc_lock_release(d);
 }
 
 static struct heap_arena *block_get_arena(struct heap_block *b)

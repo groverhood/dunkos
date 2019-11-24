@@ -20,4 +20,8 @@
 
 #define iisnegative(i) (isnegative(i, sizeof i))
 
+#define _name(x) #x
+/* Get stringified version of something, including a macro. */
+#define name(x) _name(x)
+
 #endif

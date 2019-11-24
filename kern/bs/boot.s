@@ -96,5 +96,5 @@ pagedir_table:
 .space 0x1000
 
 stack_bottom:
-.space 0x2000
+.space 0x3000
 stack_top:

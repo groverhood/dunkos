@@ -87,7 +87,7 @@ struct fault_interrupt_frame {
  **/
 enum interrupt_defer {
 	INTRDEFR_NONE,
-	INTRDEFR_SCHEDULE
+	INTRDEFR_YIELD
 };
 
 struct interrupt;

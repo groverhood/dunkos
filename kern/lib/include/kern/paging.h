@@ -8,7 +8,7 @@
 void init_paging(void);
 
 enum page_allocation_flags {
-	PAL_ZERO,
+	PAL_ZERO = 1,
 	PAL_USER
 };
 

@@ -3,10 +3,14 @@
 #include <kern/thread.h>
 #include <interrupt.h>
 #include <stdio.h>
+#include <stdint.h>
 
-unsigned long ticks;
+#define TIME_SLICE 20
 
-struct list sleep_queue;
+static uint64_t ticks;
+static uint64_t thread_ticks;
+
+static struct list sleep_queue;
 
 static interrupt_handler timer_interrupt;
 
@@ -23,5 +27,27 @@ static enum interrupt_defer timer_interrupt(struct interrupt *intr,
 							void *intrframe_, 
 							struct register_state *registers)
 {
-	return INTRDEFR_SCHEDULE;
+	enum interrupt_level old_level = disable_interrupts();
+	enum interrupt_defer action = INTRDEFR_NONE;
+	struct benign_interrupt_frame *frame = intrframe_;
+
+	ticks++;
+
+	if (++thread_ticks > TIME_SLICE) {
+		action = INTRDEFR_YIELD;
+		thread_ticks = 0;
+		struct thread_context *cc = &get_current_thread()->context;
+		cc->ip = (void *)frame->rip;
+		cc->sp = (size_t *)frame->rsp;
+	}
+
+	struct thread *sleeper;
+	while (!list_empty(&sleep_queue) && 
+	(sleeper = elem_value(list_front(&sleep_queue), struct thread, sleep_elem))->sleep_end <= ticks) {
+		semaphore_inc(&sleeper->sleep_sema);
+		list_pop_front(&sleep_queue);
+	}
+
+	set_interrupt_level(old_level);
+	return action;
 }

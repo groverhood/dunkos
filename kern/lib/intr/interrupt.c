@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <interrupt.h>
+#include <kern/thread.h>
 
 extern void _init_tss(void);
 extern void _ltr(void);
@@ -16,6 +17,8 @@ static enum interrupt_level intr_level;
 static int intr_index;
 static bool isr_init;
 static interrupt_handler intr_default;
+
+typedef uint64_t interrupt_code_t;
 
 extern void isr_stub0(void *);
 
@@ -61,7 +64,7 @@ enum interrupt_level get_interrupt_level(void)
 	return intr_level;
 }
 
-enum interrupt_level set_interrupt_level(enum interrupt_level level)
+__attribute__((optimize (0))) enum interrupt_level set_interrupt_level(enum interrupt_level level)
 {
 	enum interrupt_level old_level = intr_level;
 	switch (level) {
@@ -80,13 +83,16 @@ static enum interrupt_defer intr_default(struct interrupt *intr,
 	return INTRDEFR_NONE;
 }
 
-void isr_common_stub(unsigned long intr, void *intrframe_,
+void isr_common_stub(interrupt_code_t intr, void *intrframe_,
 					 struct register_state *registers)
 {
 	enum interrupt_level old_level;
+	enum interrupt_defer action;
 	old_level = set_interrupt_level(INTR_CONTEXT);
-	intr_table[intr].handler(intr_table + intr, intrframe_, registers);
+	action = intr_table[intr].handler(intr_table + intr, intrframe_, registers);
 	set_interrupt_level(old_level);
+	if (action == INTRDEFR_YIELD)
+		yield_current();
 }
 
 void install_interrupt_handler(enum interrupt_type which, interrupt_handler *handler)
