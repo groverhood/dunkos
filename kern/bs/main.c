@@ -3,6 +3,7 @@
 #include <console.h>
 #include <interrupt.h>
 #include <kern/pml4.h>
+#include <kern/timer.h>
 #include <kern/memory.h>
 #include <kern/paging.h>
 #include <kern/thread.h>
@@ -27,6 +28,7 @@ void kernel(void)
 	puts("Memory system initialized!");
 
 	init_threads();
+	init_timer();
 	puts("Threads initialized!");
 	
 	exit_thread();

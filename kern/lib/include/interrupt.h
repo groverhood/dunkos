@@ -17,6 +17,7 @@ enum interrupt_type {
 	INTR_TYPE_DIV0,
 	INTR_TYPE_PGFAULT = 14,
 	INTR_TYPE_TIMER = 0x20,
+	INTR_TYPE_SPURIOUS = 0x27
 };
 
 struct task_state_segment {

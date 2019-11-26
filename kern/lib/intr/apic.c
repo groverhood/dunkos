@@ -1,15 +1,22 @@
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <algo.h>
 
 #define ENABLE_X2APIC (1 << 11)
 
 void _enable_apic_timer(void)
 {
+	uint32_t result;
 	__asm__ volatile (
-		"movl $0xFEE003E0, %ecx\n\t"
-		""
+		"movl $0xFEE003E0, %%ecx\n\t"
+		"rdmsr"
+		: "=a" (result)
 	);
+
+	printf("%x\n", result);
+	halt();
 }
 
 bool _enable_apic(void)

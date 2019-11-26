@@ -21,8 +21,6 @@ static interrupt_handler intr_default;
 
 typedef uint64_t interrupt_code_t;
 
-extern void isr_stub0(void *);
-
 void init_interrupts(void)
 {
 	isr_init = true;
@@ -52,6 +50,10 @@ void init_interrupts(void)
 	}
 
 	intr_table[INTR_TYPE_DIV0].name = "Division by zero";
+	intr_table[INTR_TYPE_PGFAULT].name = "Page fault";
+	intr_table[INTR_TYPE_TIMER].name = "Timer interrupt";
+	intr_table[INTR_TYPE_SPURIOUS].name = "Spurious interrupt";
+
 	intr_level = INTR_ENABLED;
 }
 
