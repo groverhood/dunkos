@@ -24,4 +24,6 @@
 /* Get stringified version of something, including a macro. */
 #define name(x) _name(x)
 
+#define halt() __asm__ volatile ("hlt")
+
 #endif

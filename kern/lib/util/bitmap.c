@@ -1,6 +1,7 @@
 #include <util/bitmap.h>
 #include <kern/heap.h>
 #include <string.h>
+#include <algo.h>
 
 #define ELEM_BITS (sizeof(size_t) * 8)
 
@@ -82,17 +83,18 @@ size_t bitmap_scan(struct bitmap *bm, size_t start, size_t nbits, bit b)
 	bool bit_found = false;
 	while (start < bm->bitcount && !bit_found) {
 		size_t bits_scanned = 0;
-		while (bits_scanned < nbits 
-				&& bitmap_test(bm, start + bits_scanned) == b) {
-			bits_scanned++;	
+		while (start + bits_scanned < bm->bitcount
+			&& bits_scanned < nbits 
+			&& bitmap_test(bm, start + bits_scanned) == b) {
+			bits_scanned++;
 		}
+
 		bit_found = (bits_scanned == nbits);
 
 		if (!bit_found) {
-			start += bits_scanned;
+			start += max(bits_scanned, 1);
 		}
 	}
-
 	return bit_found ? start : BITMAP_NPOS;
 }
 

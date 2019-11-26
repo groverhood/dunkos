@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <interrupt.h>
 #include <kern/thread.h>
+#include <algo.h>
 
 extern void _init_tss(void);
 extern void _ltr(void);
@@ -79,8 +80,10 @@ static enum interrupt_defer intr_default(struct interrupt *intr,
 						 void *intrframe_,
 						 struct register_state *registers)
 {
-	printf("Unhandled interrupt: 0x%x\n", intr->id);
-	return INTRDEFR_NONE;
+	struct benign_interrupt_frame *frame = intrframe_;
+	printf("Unhandled interrupt: %#x\n", intr->id);
+	printf("Interrupt occurred at %p\n", frame->rip);
+	halt();
 }
 
 void isr_common_stub(interrupt_code_t intr, void *intrframe_,

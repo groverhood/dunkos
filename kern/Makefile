@@ -81,10 +81,10 @@ clean:
 	rm -vf $(BUILD_DIR)/*.o
 
 run: all
-	qemu-system-x86_64 -cdrom $(BUILD_DIR)/kernel.iso --curses -d cpu_reset -m 512
+	qemu-system-x86_64 -cdrom $(BUILD_DIR)/kernel.iso --curses -m 512
 
 run-simple:
-	qemu-system-x86_64 -cdrom $(BUILD_DIR)/kernel.iso --curses -d cpu_reset -m 512
+	qemu-system-x86_64 -cdrom $(BUILD_DIR)/kernel.iso --curses -m 512
 
 run-window:
-	qemu-system-x86_64 -cdrom $(BUILD_DIR)/kernel.iso -d cpu_reset -m 512
+	qemu-system-x86_64 -cdrom $(BUILD_DIR)/kernel.iso -m 512

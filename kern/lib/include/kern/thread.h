@@ -15,6 +15,7 @@ typedef int tid_t;
 #define PRI_MAX		0x3F
 
 #define KTHREAD_MAGIK	   (0xF42069ACAB131214)
+#define KTHREAD_STACK_SIZE (0x1000)
 
 enum thread_status {
 	THRSTAT_BLOCKED,
@@ -69,6 +70,11 @@ void exit_thread(void);
 int thread_get_priority(struct thread *restrict);
 void thread_block(struct thread *);
 void thread_unblock(struct thread *);
+
+static inline size_t *thread_stack_top(struct thread *thr)
+{
+	return (size_t *)((uint8_t *)(thr + 1) + KTHREAD_STACK_SIZE);
+}
 
 #define thread_compare(lf, ri, elem)\
 	({\

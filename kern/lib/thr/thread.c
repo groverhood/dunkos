@@ -4,6 +4,7 @@
 #include <kern/synch.h>
 #include <kern/heap.h>
 #include <kern/timer.h>
+#include <stdio.h>
 #include <algo.h>
 
 static struct list ready_threads;
@@ -28,40 +29,32 @@ void init_threads(void)
 	next_tid = 0;
 
 	/* Create the idle thread. */
-	create_thread(&idle_thread, idle_thread_func, NULL);
+	create_thread(&idle_thread, &idle_thread_func, NULL);
+	printf("idle thread: %p\n", idle_thread);
 
 	/* The initial thread's stack has already been supplied
 	   in the reserved region of physical memory. */
 	initial_thread = calloc(1, sizeof *initial_thread);
 	init_thread(initial_thread);
-
-	struct thread_context *ctx = &initial_thread->context;
-	__asm__ (
-		"movq (%%rsp), %%rdi\n\t"
-		"movq %%rdi, %0\n\t"
-		"movq %%rsp, %1"
-		: "=m" (ctx->ip), "=r" (ctx->sp)
-	);
 	
 	threads_init = true;
 	running_thread = initial_thread;
 
-	init_timer();
+	//init_timer();
 }
 
-#define KTHREAD_STACK_SIZE (0x1000)
-
-static void start_thread(struct thread *thr)
+static void start_thread(void)
 {
 	set_interrupt_level(INTR_ENABLED);
-	thr->context.entry(thr->context.aux);
+	struct thread *cur = get_current_thread();
+	cur->context.entry(cur->context.aux);
 	exit_thread();
 }
 
 void create_thread(struct thread **dest, thread_function *fn, void *aux)
 {
 	struct thread *newthr;
-	newthr = malloc(sizeof *newthr + KTHREAD_STACK_SIZE);
+	newthr = calloc(1, sizeof *newthr + KTHREAD_STACK_SIZE);
 	*dest = newthr;
 	
 	init_thread(newthr);
@@ -69,14 +62,13 @@ void create_thread(struct thread **dest, thread_function *fn, void *aux)
 	newthr->magic = KTHREAD_MAGIK;
 
 	struct thread_context *c = &newthr->context;
-	c->sp = (size_t *)((uint8_t *)(newthr) + sizeof *newthr + KTHREAD_STACK_SIZE);
+	c->sp = thread_stack_top(newthr);
 	c->entry = fn;
 	c->aux = aux;
 	c->ip = &start_thread;
 
-	enum interrupt_level old_level = disable_interrupts();
-	thread_unblock(newthr);
-	set_interrupt_level(old_level);
+	if (newthr != idle_thread)
+		thread_unblock(newthr);
 }
 
 void init_thread(struct thread *thr)
@@ -121,7 +113,7 @@ static struct thread *next_thread(void)
 {
 	if (list_empty(&ready_threads)) {
 		return idle_thread;
-	}
+	}	
 
 	return elem_value(list_pop_front(&ready_threads), struct thread, status_elem);
 }
@@ -169,41 +161,27 @@ void thread_unblock(struct thread *thr)
 	thr->status = THRSTAT_READY;
 
 	set_interrupt_level(old_level);
-} 
-
-#define SAVE_CONTEXT "pushfq\n\tpushq %%rbp\n\tmovq %%rsi, %%rbp\n\t"
-#define RESTORE_CONTEXT "movq %%rbp, %%rsi\n\tpopq %%rbp\n\tpopfq\n\t" 
-#define EXTRA_CLOBBER\
-    "rcx", "rbx", "rdx", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
-#define SWITCH_TO_CFUNC __switch_to
-
-struct thread *__switch_to(struct thread *prev, struct thread *next)
-{
-	
-	return next;
 }
 
-#define switch_to(prev_, next_, last_)\
-	asm volatile (\
-		SAVE_CONTEXT\
-		"movq %%rsp, %c[thread_rsp](%[prev])\n\t" /* Save %rsp. */\
-		"movq %c[thread_rsp](%[next]), %%rsp\n\t" /* Restore %rsp. */\
-		"call " name(SWITCH_TO_CFUNC) "\n\t"\
-		"jmp *%c[thread_ip](%[next])\n\t"\
-		RESTORE_CONTEXT\
-		: "=a" (last_)\
-		: [next] "S" (next_), [prev] "D" (prev_),\
-		  [thread_rsp] "i" (offsetof(struct thread, context.sp)),\
-		  [thread_ip] "i" (offsetof(struct thread, context.ip))\
-		: "memory", "cc", EXTRA_CLOBBER\
-	)
+__attribute__((noreturn)) void switch_to(struct thread *prev, struct thread *next)
+{
+	if (prev->status == THRSTAT_DEAD)
+		free(prev);
+
+	void *ip = next->context.ip;
+	__asm__ volatile (
+		"movq %0, %%rsp\n"
+		"jmp *%1" 
+		:: "m" (next->context.sp), "r" (ip)
+	);
+}
 
 __attribute__((noreturn)) void schedule_next(void) 
 {
-	register struct thread *next = next_thread();
-	register struct thread_context *c = &next->context;
-
-	switch_to(running_thread, next, running_thread);
+	struct thread *next = next_thread();
+	struct thread *prev = running_thread;
+	running_thread = next;
+	switch_to(prev, next);
 }
 
 __attribute__((noreturn)) void exit_thread(void)
@@ -226,7 +204,7 @@ static tid_t assign_id(void)
 static void idle_thread_func(void *aux)
 {
 	puts("Idling...");
-	while (1) {}
+	halt();
 }
 
 /* SYNCHRONIZATION IMPL */

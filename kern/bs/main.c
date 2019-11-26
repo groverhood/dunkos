@@ -27,6 +27,7 @@ void kernel(void)
 	puts("Memory system initialized!");
 
 	init_threads();
-
+	puts("Threads initialized!");
+	
 	exit_thread();
 }

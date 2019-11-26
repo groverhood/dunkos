@@ -129,6 +129,8 @@ void free(void *p)
 	struct heap_desc *d = a->desc;
 	desc_lock_acquire(d);
 
+	list_push_back(&d->free_list, &b->free_elem);
+
 	a->free_count++;
 	if (a->free_count == d->arena_size) {
 		size_t block;
