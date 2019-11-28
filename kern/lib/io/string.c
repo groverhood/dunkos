@@ -27,9 +27,8 @@ void *memcpy(void *dest, const void *src, size_t n)
 	/* Naive approach. */
 	unsigned char *pdest = dest;
 	const unsigned char *psrc = src;
-	while (n) {
+	while (n-- > 0) {
 		*pdest++ = *psrc++;
-		n--;
 	}
 
 	return dest;

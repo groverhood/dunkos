@@ -32,6 +32,7 @@ struct thread_context {
 	thread_function *entry;
 	void *aux;
 };
+
 struct thread {
 	tid_t id;
 	enum thread_status status;
@@ -47,6 +48,7 @@ struct thread {
 	struct list_elem donor_elem;
 
 	struct thread_context context;
+	struct process *parent;
 
 	uint64_t magic;
 };
@@ -55,6 +57,7 @@ struct thread {
 /* Initialize thread functionality. */
 void init_threads(void);
 
+void thread_init(struct thread *);
 void create_thread(struct thread **, thread_function *, void *aux);
 
 struct thread *get_current_thread(void);

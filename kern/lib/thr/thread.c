@@ -6,6 +6,7 @@
 #include <kern/timer.h>
 #include <stdio.h>
 #include <algo.h>
+#include <kern/asm.h>
 
 static struct list ready_threads;
 static struct thread *running_thread;
@@ -17,7 +18,7 @@ static struct list free_threads;
 bool threads_init;
 
 static list_comparator thread_priority_highest;
-static void init_thread(struct thread *thr);
+static void thread_init(struct thread *thr);
 static tid_t assign_id(void);
 static thread_function idle_thread_func;
 
@@ -30,7 +31,7 @@ void init_threads(void)
 	/* The initial thread's stack has already been supplied
 	   in the reserved region of physical memory. */
 	initial_thread = calloc(1, sizeof *initial_thread);
-	init_thread(initial_thread);
+	thread_init(initial_thread);
 	
 	threads_init = true;
 	running_thread = initial_thread;
@@ -50,7 +51,7 @@ void create_thread(struct thread **dest, thread_function *fn, void *aux)
 	newthr = calloc(1, sizeof *newthr + KTHREAD_STACK_SIZE);
 	*dest = newthr;
 	
-	init_thread(newthr);
+	thread_init(newthr);
 
 	newthr->magic = KTHREAD_MAGIK;
 
@@ -63,7 +64,7 @@ void create_thread(struct thread **dest, thread_function *fn, void *aux)
 	thread_unblock(newthr);
 }
 
-void init_thread(struct thread *thr)
+void thread_init(struct thread *thr)
 {
 	list_init(&thr->donors);
 

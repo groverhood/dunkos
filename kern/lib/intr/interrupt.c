@@ -19,6 +19,7 @@ static int intr_index;
 static bool isr_init;
 static interrupt_handler intr_default;
 static interrupt_handler double_fault;
+static interrupt_handler gp_fault;
 
 typedef uint64_t interrupt_code_t;
 
@@ -48,11 +49,13 @@ void init_interrupts(void)
 
 	intr_table[INTR_TYPE_DIV0].name = "Division by zero";
 	intr_table[INTR_TYPE_DBLFAULT].name = "Double fault";
+	intr_table[INTR_TYPE_GPFAULT].name = "General protection fault";
 	intr_table[INTR_TYPE_PGFAULT].name = "Page fault";
 	intr_table[INTR_TYPE_TIMER].name = "Timer interrupt";
 	intr_table[INTR_TYPE_SPURIOUS].name = "Spurious interrupt";
 
 	install_interrupt_handler(INTR_TYPE_DBLFAULT, &double_fault);
+	install_interrupt_handler(INTR_TYPE_GPFAULT, &gp_fault);
 
 	intr_level = INTR_ENABLED;
 }
@@ -88,12 +91,22 @@ static enum interrupt_defer intr_default(struct interrupt *intr,
 	halt();
 }
 
-static enum interrupt_defer double_fault(struct interrupt *intr, 
+static enum interrupt_defer gp_fault(struct interrupt *intr, 
 						 void *intrframe_,
 						 struct register_state *registers)
 {
 	struct fault_interrupt_frame *frame = intrframe_;
 
+	printf("General protection fault at %p (%#lx)\n", frame->rip, frame->error);
+	halt();
+}
+
+static enum interrupt_defer double_fault(struct interrupt *intr, 
+						 void *intrframe_,
+						 struct register_state *registers)
+{
+	struct fault_interrupt_frame *frame = intrframe_;
+	halt();
 }
 
 void isr_common_stub(interrupt_code_t intr, void *intrframe_,

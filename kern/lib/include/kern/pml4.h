@@ -20,6 +20,10 @@ bool pml4_is_writable(size_t *pml4, void *addr);
 bool pml4_is_accessed(size_t *pml4, void *addr);
 bool pml4_is_dirty(size_t *pml4, void *addr);
 
+/* Copy src -> dest pml4. If cow is set, then upon writing to src's physical
+   frames, dest will be allocated a new frame. */
+void pml4_copy(size_t *dest_pml4, const size_t *src_pml4, bool cow);
+
 /**
  *  Retrieves the current process's pml4,
  * 	the root of the paging system.

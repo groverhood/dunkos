@@ -34,6 +34,8 @@ static enum interrupt_defer timer_interrupt(struct interrupt *intr,
 {
 	puts("Time out!!!");
 	halt();
+	halt();
+	halt();
 
 	enum interrupt_level old_level = disable_interrupts();
 	enum interrupt_defer action = INTRDEFR_NONE;

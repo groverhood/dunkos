@@ -33,8 +33,6 @@ static enum interrupt_defer page_fault(struct interrupt *intr,
 	size_t *pml4 = get_pml4();
 
 	if (!(error & 0x1)) {
-		printf("Page fault (faultaddr \\n ip)\n%p\n%p\n", faultaddr, intrframe->rip);
-		__asm__ volatile ("hlt");
 		pml4_map_address(pml4, page_round_down(faultaddr), page_allocate(0));
 	}
 

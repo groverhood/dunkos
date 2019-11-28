@@ -37,8 +37,22 @@ static inline bool is_process(struct thread *thr)
 	return (thr->magic == PROCESS_MAGIK);
 }
 
+static inline struct thread *process_get_base(struct process *p)
+{
+	return &p->base;
+}
+
+static inline struct process *process_get_parent(struct process *p)
+{
+	return process_get_base(p)->parent;
+}
+
+void init_syscalls(void);
+
+struct process *current_process(void);
+
 /* Spawn a new child process. */
-pid_t fork_process(void);
+struct process *fork_process(void);
 
 /* Override the current process with a new one. */
 void exec_process(const char *file, char **argv);

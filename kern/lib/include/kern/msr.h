@@ -6,15 +6,13 @@
 /* Write [%edx:%eax] to the provided msr. */
 static inline void wrmsr(uint32_t where, uint64_t val)
 {
-    uint64_t upper = val >> 32;
-    uint64_t lower = val & 0xFFFFFFFF;
     __asm__ volatile (
+        "movq %[val], %%rax\n\t"
+        "movq %[val], %%rdx\n\t"
+        "shrq $32, %%rdx\n\t"
         "movl %[where], %%ecx\n\t"
-        "movl %[edx], %%edx\n\t"
-        "movl %[eax], %%eax\n\t"
         "wrmsr"
-        :: [where] "r" (where), [edx] "r" ((uint32_t)upper), 
-            [eax] "r" ((uint32_t)lower)
+        :: [where] "r" (where), [val] "r" (val)
     );
 }
 
