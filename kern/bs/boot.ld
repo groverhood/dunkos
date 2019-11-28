@@ -28,5 +28,8 @@ SECTIONS
     _pool_begin = .;
 
     . = 6M;
+    _apic_base = .;
+
+    . = 8M;
     _reserved_end = .;
 }

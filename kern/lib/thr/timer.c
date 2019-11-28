@@ -4,6 +4,7 @@
 #include <interrupt.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <algo.h>
 
 #define TIME_SLICE 20
 
@@ -14,19 +15,26 @@ static struct list sleep_queue;
 
 static interrupt_handler timer_interrupt;
 
+extern bool _enable_apic(void);
 extern void _enable_apic_timer(void);
 
 void init_timer(void)
 {
-	ticks = 0;
-	install_interrupt_handler(INTR_TYPE_TIMER, &timer_interrupt);
-	_enable_apic_timer();
+	if (_enable_apic()) {
+		ticks = 0;
+		install_interrupt_handler(INTR_TYPE_TIMER, &timer_interrupt);
+		puts("Enabled APIC...");
+		_enable_apic_timer();
+	}
 }
 
 static enum interrupt_defer timer_interrupt(struct interrupt *intr, 
 							void *intrframe_, 
 							struct register_state *registers)
 {
+	puts("Time out!!!");
+	halt();
+
 	enum interrupt_level old_level = disable_interrupts();
 	enum interrupt_defer action = INTRDEFR_NONE;
 	struct benign_interrupt_frame *frame = intrframe_;

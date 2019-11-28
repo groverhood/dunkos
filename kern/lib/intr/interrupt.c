@@ -18,6 +18,7 @@ static enum interrupt_level intr_level;
 static int intr_index;
 static bool isr_init;
 static interrupt_handler intr_default;
+static interrupt_handler double_fault;
 
 typedef uint64_t interrupt_code_t;
 
@@ -36,10 +37,6 @@ void init_interrupts(void)
 
 	puts("Initialized Interrupt Descriptor Table...");
 
-	if (_enable_apic()) {
-		puts("Enabled APIC...");
-	}
-
 	_install_stubs();
 
 	int i;
@@ -50,9 +47,12 @@ void init_interrupts(void)
 	}
 
 	intr_table[INTR_TYPE_DIV0].name = "Division by zero";
+	intr_table[INTR_TYPE_DBLFAULT].name = "Double fault";
 	intr_table[INTR_TYPE_PGFAULT].name = "Page fault";
 	intr_table[INTR_TYPE_TIMER].name = "Timer interrupt";
 	intr_table[INTR_TYPE_SPURIOUS].name = "Spurious interrupt";
+
+	install_interrupt_handler(INTR_TYPE_DBLFAULT, &double_fault);
 
 	intr_level = INTR_ENABLED;
 }
@@ -83,9 +83,17 @@ static enum interrupt_defer intr_default(struct interrupt *intr,
 						 struct register_state *registers)
 {
 	struct benign_interrupt_frame *frame = intrframe_;
-	printf("Unhandled interrupt: %#x\n", intr->id);
+	printf("Unhandled interrupt: (%#x)\n", intr->id);
 	printf("Interrupt occurred at %p\n", frame->rip);
 	halt();
+}
+
+static enum interrupt_defer double_fault(struct interrupt *intr, 
+						 void *intrframe_,
+						 struct register_state *registers)
+{
+	struct fault_interrupt_frame *frame = intrframe_;
+
 }
 
 void isr_common_stub(interrupt_code_t intr, void *intrframe_,

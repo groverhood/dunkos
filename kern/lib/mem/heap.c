@@ -38,7 +38,7 @@ static inline void desc_lock_release(struct heap_desc *d)
 }
 
 /* Magic number for detecting arena corruption. */
-#define ARENA_MAGIC 0x9a548eed
+#define ARENA_MAGIC 0x9A548EED
 
 struct heap_arena {
 	size_t magic;
@@ -57,6 +57,7 @@ static struct heap_block *arena_get_block(struct heap_arena *, size_t i);
 
 void init_heap(void)
 {
+	/* Initialize heap descriptors. */
 	size_t i;
 	for (i = 0; i < sizeof descriptors / sizeof *descriptors; ++i) {
 		size_t block_size = (8 << i);

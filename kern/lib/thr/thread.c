@@ -9,7 +9,6 @@
 
 static struct list ready_threads;
 static struct thread *running_thread;
-static struct thread *idle_thread;
 static struct thread *initial_thread;
 static tid_t next_tid;
 
@@ -28,10 +27,6 @@ void init_threads(void)
 
 	next_tid = 0;
 
-	/* Create the idle thread. */
-	create_thread(&idle_thread, &idle_thread_func, NULL);
-	printf("idle thread: %p\n", idle_thread);
-
 	/* The initial thread's stack has already been supplied
 	   in the reserved region of physical memory. */
 	initial_thread = calloc(1, sizeof *initial_thread);
@@ -39,8 +34,6 @@ void init_threads(void)
 	
 	threads_init = true;
 	running_thread = initial_thread;
-
-	//init_timer();
 }
 
 static void start_thread(void)
@@ -67,8 +60,7 @@ void create_thread(struct thread **dest, thread_function *fn, void *aux)
 	c->aux = aux;
 	c->ip = &start_thread;
 
-	if (newthr != idle_thread)
-		thread_unblock(newthr);
+	thread_unblock(newthr);
 }
 
 void init_thread(struct thread *thr)
@@ -112,7 +104,7 @@ enum thread_status get_current_status(void)
 static struct thread *next_thread(void)
 {
 	if (list_empty(&ready_threads)) {
-		return idle_thread;
+		return initial_thread;
 	}	
 
 	return elem_value(list_pop_front(&ready_threads), struct thread, status_elem);
@@ -201,10 +193,12 @@ static tid_t assign_id(void)
 	return next_tid++;
 }
 
-static void idle_thread_func(void *aux)
+__attribute__((noreturn)) static void idle_thread_func(void *aux)
 {
 	puts("Idling...");
-	halt();
+	
+	while (1);
+	__builtin_unreachable();
 }
 
 /* SYNCHRONIZATION IMPL */

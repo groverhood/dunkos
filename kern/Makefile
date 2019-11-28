@@ -24,7 +24,7 @@ fresh:
 	rm -vf $(BUILD_DIR)/* && rm -vf $(BOOT_DIR)/iso/boot/kernel.bin && mkdir -p $(BUILD_DIR)
 
 image: kernel
-	grub-mkrescue /usr/lib/grub/i386-pc -o $(BUILD_DIR)/kernel.iso $(BOOT_DIR)/iso --verbose
+	grub-mkrescue /usr/lib/grub/i386-pc -o $(BUILD_DIR)/kernel.iso $(BOOT_DIR)/iso
 
 kernel: kern-object lib-object
 	$(LD) -n -o $(BOOT_DIR)/iso/boot/kernel.bin -T $(BOOT_DIR)/boot.ld $(KERN_OBJECT) $(LIB_OBJECT)

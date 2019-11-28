@@ -8,6 +8,7 @@
 #include <kern/paging.h>
 #include <kern/thread.h>
 #include <kern/heap.h>
+#include <algo.h>
 
 /**
  *  Initialize kernel state and begin OS process.
@@ -25,11 +26,12 @@ void kernel(void)
 	init_pml4();
 	init_paging();
 	init_heap();
-	puts("Memory system initialized!");
+	puts("Memory system initialized!\n");
 
 	init_threads();
 	init_timer();
 	puts("Threads initialized!");
 	
-	exit_thread();
+	puts("\nIdling...");
+	while (1) halt();
 }

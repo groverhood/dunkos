@@ -15,6 +15,7 @@ enum interrupt_level {
 
 enum interrupt_type {
 	INTR_TYPE_DIV0,
+	INTR_TYPE_DBLFAULT = 8,
 	INTR_TYPE_PGFAULT = 14,
 	INTR_TYPE_TIMER = 0x20,
 	INTR_TYPE_SPURIOUS = 0x27
