@@ -46,6 +46,7 @@ struct thread {
 	struct list_elem status_elem;
 	struct list_elem sleep_elem;
 	struct list_elem donor_elem;
+	struct list_elem child_elem;
 
 	struct thread_context context;
 	struct process *parent;

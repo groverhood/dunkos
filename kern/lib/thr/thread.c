@@ -18,7 +18,6 @@ static struct list free_threads;
 bool threads_init;
 
 static list_comparator thread_priority_highest;
-static void thread_init(struct thread *thr);
 static tid_t assign_id(void);
 static thread_function idle_thread_func;
 

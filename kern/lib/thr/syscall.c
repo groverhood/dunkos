@@ -5,11 +5,11 @@
 
 /* IA32_LSTAR msr. */
 #define SYSCALL_ADDR 0xC0000082
-#define sysreturn(value) __asm__ volatile ("sysret" :: "a" (value)); __builtin_unreachable()
 
-static void *syscall_table[SYS_COUNT];
+/* Cannot be static, as we use this in sysentry. */
+void *syscall_table[SYS_COUNT];
 
-/* In reality, this isn't a function, but rather the location of a jump
+/* In reality, this isn't a function, but rather the location of a call
    instruction that uses the syscall number as an offset into the syscall
    table. */
 extern void syscall_handler(void);
@@ -33,14 +33,23 @@ void init_syscalls(void)
 
 pid_t fork(void)
 {
-    sysreturn(fork_process()->base.id);
+    struct process *frk = fork_process();
+
+    /* This may seem like an evil setup for goto, but really the goal of this 
+       is to ensure that our newly forked child process can be identified 
+       within itself. */
+    frk->base.context.ip = &&fork_return;
+    thread_unblock(process_get_base(frk));
+    return (fork_process()->base.id);
+
+fork_return:
+    return (0);
 }
 
 pid_t getpid(void)
 {
-    sysreturn(current_process()->base.id);
+    return (current_process()->base.id);
 }
-
 
 int exec(const char *file, char **argv)
 {
@@ -48,20 +57,37 @@ int exec(const char *file, char **argv)
 
     /* Return -1 upon failure, as we shouldn't reach this
        point in the process. */
-    sysreturn(-1);
+    return -1;
 }
 
 void exit(int status)
 {
     exit_process(status);
-    
 }
 
 int wait(pid_t p)
 {
+    int status = -1;
+    struct process *cur = current_process();
+    struct list_elem *e;
 
+    for (e = list_begin(&cur->children); e != list_end(&cur->children);
+        e = list_next(e))
+    {
+        struct process *chld;
+        struct thread *t = elem_value(e, struct thread, child_elem);
+        if (is_process(t) && t->id == p) {
+            chld = (struct process *)t;
+
+            semaphore_dec(&chld->wait_sema);
+            status = chld->exit_code;
+            list_remove(&cur->children, &t->child_elem);
+            semaphore_inc(&chld->reap_sema);
+        }
+    }
+
+    return (status);
 }
-
 
 bool create(const char *file)
 {
@@ -73,7 +99,6 @@ bool remove(const char *file)
 
 }
 
-
 int open(const char *file)
 {
 
@@ -83,7 +108,6 @@ void close(int fd)
 {
 
 }
-
 
 ssize_t write(int fd, const void *src, size_t bytes)
 {

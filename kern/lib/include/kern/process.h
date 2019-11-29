@@ -4,10 +4,15 @@
 #include <kern/synch.h>
 #include <util/list.h>
 #include <kern/thread.h>
+#include <kern/vmmgmt.h>
 
 #define PROCESS_MAGIK (~KTHREAD_MAGIK)
 
 typedef tid_t pid_t;
+
+struct process_context {
+	
+};
 
 struct process {
 	struct thread base;
@@ -25,11 +30,19 @@ struct process {
 	   the parent needing them. */
 	struct semaphore reap_sema;
 
-	/* Child processes. */
+	/* Child processes and threads. */
 	struct list children;
 
-	/* Used to store process in parent's child processes. */
-	struct list_elem child_elem;
+	struct page_table *spt;
+
+	uint8_t *code_segment_begin;
+	uint8_t *code_segment_end;
+
+	uint8_t *data_segment_begin;
+	uint8_t *data_segment_end;
+
+	uint8_t *heap_begin;
+	uint8_t *heap_end;
 };
 
 static inline bool is_process(struct thread *thr)

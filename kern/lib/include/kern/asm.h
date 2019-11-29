@@ -11,6 +11,7 @@
 
 static inline void outb(uint8_t value, uint16_t port)
 {
+    barrier();
     __asm__ volatile (
         "outb %[value], %[port]"
         :: [value] "r" (value), [port] "r" (port)
@@ -19,6 +20,7 @@ static inline void outb(uint8_t value, uint16_t port)
 
 static inline uint8_t inb(uint16_t port)
 {
+    barrier();
     uint8_t value;
     __asm__ (
         "inb %[port], %[value]"
@@ -26,6 +28,13 @@ static inline uint8_t inb(uint16_t port)
         : [port] "r" (port)
     );
     return value;
+}
+
+__attribute__((noreturn)) static inline void jump(uint64_t where)
+{
+    barrier();
+    __asm__ volatile ("jmp %0" :: "r" (where) : "memory");
+    unreachable();
 }
 
 #endif

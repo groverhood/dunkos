@@ -22,7 +22,6 @@ struct process *current_process(void)
     return is_process(cur) ? (struct process *)(cur) : cur->parent;
 }
 
-
 struct process *fork_process(void)
 {
     struct process *cur = current_process();
@@ -34,11 +33,10 @@ struct process *fork_process(void)
     /* Copy the stack pointer and instruction pointer so as to resume
        execution after the fork() system call. */
     memcpy(&thr->context, &cur->base.context, sizeof(struct thread_context));
-
-    list_push_back(&cur->children, &pr->child_elem);
+    list_push_back(&cur->children, &pr->base.child_elem);
 
     /* Ensure an identical address space that doesn't mutate the parent's. */
-    pml4_copy(pr->pml4, cur->pml4, true);
+    page_table_copy(pr->spt, cur->spt);
 
     return pr;
 }
@@ -48,7 +46,6 @@ void exec_process(const char *file, char **argv)
 {
 
 }
-
 
 __attribute__((noreturn)) void exit_process(int status)
 {
@@ -60,10 +57,16 @@ __attribute__((noreturn)) void exit_process(int status)
     for (el = list_begin(&cur->children); el != list_end(&cur->children);
         el = list_next(el))
     {
-        
+        struct thread *chld = elem_value(el, struct thread, child_elem);
+        if (is_process(chld))
+            semaphore_inc(&((struct process *)chld)->reap_sema);
     }
 
+    pml4_activate(NULL);
+    pml4_destroy(cur->pml4);
 
+    semaphore_inc(&cur->wait_sema);
+    semaphore_dec(&cur->reap_sema);
 
     exit_thread();
     unreachable();

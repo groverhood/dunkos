@@ -1,6 +1,7 @@
 .extern syscall_table
 
 .global syscall_handler
-.type @function
+.type syscall_handler, @function
 syscall_handler:
-    jmp *syscall_table(, %rax, 8)
+    call *syscall_table(, %rax, 8)
+    sysret

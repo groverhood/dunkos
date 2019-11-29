@@ -40,6 +40,7 @@ class TestCase(object):
 		remove(f'{dirname(self.__testsrc)}/a.out')
 
 	def generate_test_output(self):
+		name, _ = splitext(self.__testsrc)
 		
 
 	def __repr__(self):

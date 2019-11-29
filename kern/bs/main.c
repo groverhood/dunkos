@@ -9,6 +9,7 @@
 #include <kern/thread.h>
 #include <kern/heap.h>
 #include <kern/process.h>
+#include <system.h>
 #include <algo.h>
 
 static void idle_loop(void);
@@ -34,12 +35,10 @@ void kernel(void)
 	init_timer();
 	puts("Threads initialized!");
 
-	/* Begin the terminal shell. */
-	static char *dash_argv[2];
-	dash_argv[0] = "/bin/dash";
-	dash_argv[1] = NULL;
-
-	exec_process("/bin/dash", dash_argv);
+	// /* Begin the terminal shell. */
+	// if (fork() == 0) {
+	// 	exec_process("/bin/dash", (char *[]){ "/bin/dash", NULL });
+	// }
 	
 	/* Become the idle task.
 	   
