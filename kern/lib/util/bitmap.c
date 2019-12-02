@@ -105,3 +105,8 @@ size_t bitmap_scan_and_flip(struct bitmap *bm, size_t start, size_t nbits, bit b
 		bitmap_flip(bm, index, nbits);
 	return index;
 }
+
+bool bitmap_all(struct bitmap *bm, size_t start, size_t nbits, bit b)
+{
+	return (bitmap_scan(bm, start, nbits, b) == start);
+}

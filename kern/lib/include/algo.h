@@ -1,6 +1,10 @@
 #ifndef DUNKOS_ALGO_H
 #define DUNKOS_ALGO_H
 
+#include <stdint.h>
+
+#define pure __attribute__((pure))
+
 #ifndef __cplusplus
 
 #define max(a, b) \
@@ -25,5 +29,17 @@
 #define name(x) _name(x)
 
 #define halt() __asm__ volatile ("hlt")
+
+#define getbyte(i, n) ((i) >> ((((n) * 8)) & 0xFF))
+
+inline static size_t hash_uint64(uint64_t h)
+{
+	h ^= h >> 33;
+	h *= 0xFF51AFD7ED558CCDUL;
+	h ^= h >> 33;
+	h *= 0xC4CEB9FE1A85EC53UL;
+	h ^= h >> 33;
+	return h;
+}
 
 #endif

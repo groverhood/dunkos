@@ -11,6 +11,7 @@ void pml4_destroy(size_t *);
 
 void pml4_map_address_buffer(size_t *pml4, void *addr, void *frame);
 void pml4_map_address(size_t *pml4, void *addr, void *frame);
+void pml4_clear_mapping(size_t *pml4, void *addr);
 
 void pml4_set_writable(size_t *pml4, void *addr, bool writable);
 void pml4_set_accessed(size_t *pml4, void *addr, bool accessed);

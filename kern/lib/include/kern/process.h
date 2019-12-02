@@ -17,9 +17,6 @@ struct process_context {
 struct process {
 	struct thread base;
 
-	/* The root of the process's virtual address space. */
-	size_t *pml4;
-
 	/* The exit status of the process. */
 	int exit_code;
 
@@ -32,6 +29,9 @@ struct process {
 
 	/* Child processes and threads. */
 	struct list children;
+
+	struct file *executable;
+	struct dir *cwd;
 
 	struct page_table *spt;
 

@@ -2,41 +2,71 @@
 #include <kern/vmmgmt.h>
 #include <kern/heap.h>
 #include <kern/process.h>
+#include <util/hashtable.h>
 #include <kern/pml4.h>
-
-struct pt_con {
-    size_t buckets, entries;
-    struct list *bucket_con;
-};
-
-static void pt_con_init(struct pt_con *c)
-{
-
-}
-
-static inline size_t pt_con_size(struct pt_con *c)
-{
-    return c->entries;
-}
-
-static void pt_con_insert(struct pt_con *c, struct page *p)
-{
-
-}
-
-static struct page *pt_con_find(struct pt_con *c, void *useraddr)
-{
-
-}
+#include <string.h>
+#include <algo.h>
 
 struct page_table {
-    struct pt_con con;
+    struct hashtable con;
+	/* The root of the process's virtual address space. */
+	size_t *pml4;
 };
+
+static bool page_equal(struct list_elem *l, struct list_elem *r)
+{
+    return elem_value(l, struct page, bucket_elem)->useraddr
+        == elem_value(r, struct page, bucket_elem)->useraddr;
+}
+
+static size_t page_hash(struct list_elem *e)
+{
+    return hash_uint64((uint64_t)elem_value(e, struct page, bucket_elem)->useraddr)
+}
 
 void page_table_create(struct page_table **ppt)
 {
     struct page_table *pt = calloc(1, sizeof *pt);
-    pt_con_init(&pt->con);
+    hashtable_init(&pt->con, &page_hash, &page_equal);
+    pt->pml4 = pml4_alloc();
+
+    *ppt = pt;
+}
+
+static void page_copy(struct list_elem *src_e, void *dest_pt_)
+{
+    struct page_table *dest_pt = dest_pt_;
+    struct page *src_pg = elem_value(src_e, struct page, bucket_elem);
+
+    struct page *pg = calloc(1, sizeof *pg);
+    memcpy(pg, src_pg, sizeof *pg);
+
+    /* Copy-on-write. */
+    pg->rovp = ROVP_COPY;
+    pg->readonly = true;
+
+    list_push_back(&pg->phys->aliases, &pg->alias_elem);
+    hashtable_insert(&dest_pt->con, &pg->bucket_elem);
+
+    pml4_map_address(dest_pt->pml4, pg->useraddr, frame_to_kernaddr(pg->phys));
+}
+
+void page_table_copy(struct page_table *dest, const struct page_table *src)
+{
+    hashtable_foreach(&src->con, &page_copy, dest);
+}
+
+static void page_destroy(struct list_elem *e, void *l_)
+{
+    struct page *pg = elem_value(e, struct page, bucket_elem);
+    struct list *l = l_;
+    pml4_clear_mapping(current_process()->spt->pml4, pg->useraddr);
+    free(pg);
+}
+
+void page_table_destroy(struct page_table *pt)
+{
+    hashtable_destroy(&pt->con, &page_destroy, NULL);
 }
 
 static inline bool page_within_segment(void *p)
@@ -77,22 +107,25 @@ bool page_is_valid(void *p)
 
 void page_load(void *p)
 {
+    struct page key, *pg;
+    key.useraddr = p;
     struct process *pr = current_process();
-    struct pt_con *con = &pr->spt->con;
-    struct page *pg = pt_con_find(con, p);
-    if (pg == NULL) {
+    struct page_table *pt = pr->spt;
+    struct hashtable *con = &pt->con;
+    struct list_elem *pg_el = hashtable_find(con, &key.bucket_elem);
+    
+    if (pg_el == NULL) {
         pg = calloc(1, sizeof *pg);
         pg->ondisk = false;
         pg->useraddr = p;
-        pt_con_insert(con, &pg);
-    }
+        hashtable_insert(con, &pg);
+    } else pg = elem_value(pg_el, struct page, bucket_elem);
 
     struct frame *f = allocate_frame();
     pg->phys = f;
     list_push_back(&f->aliases, &pg->alias_elem);
 
-    pml4_map_address(pr->pml4, p, 
-        kernel_to_phys(frame_to_kernaddr(f)));   
+    pml4_map_address(pt->pml4, p, kernel_to_phys(frame_to_kernaddr(f)));   
 
     if (pg->ondisk)
         page_read_from_disk(pg);

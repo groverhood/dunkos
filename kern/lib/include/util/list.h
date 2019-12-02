@@ -67,6 +67,10 @@ struct list_elem *list_end(struct list *);
 struct list_elem *list_worstfit(struct list *, list_comparator *);
 struct list_elem *list_bestfit(struct list *, list_comparator *);
 
+typedef void list_action(struct list_elem *, void *aux);
+
+void list_foreach(struct list *, list_action *, void *aux);
+
 void elem_swap(struct list_elem *, struct list_elem *);
 
 #endif

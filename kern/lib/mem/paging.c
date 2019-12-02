@@ -59,8 +59,7 @@ static struct page_pool kernel_pool;
 static struct page_pool user_pool;
 
 /* The end of the kernel static data segment. */
-static uintptr_t reserved_end;
-
+uintptr_t reserved_end;
 
 void init_paging(void)
 {
@@ -77,7 +76,6 @@ void init_paging(void)
 	printf("User page base: %p\n", base + kernel_pages * PAGESIZE);
 	install_interrupt_handler(INTR_TYPE_PGFAULT, &page_fault);	
 
-
 	size_t pgno;
 	for (pgno = 0; pgno < total_pages; ++pgno) {
 		uint8_t *kernaddr = base + pgno * PAGESIZE;
@@ -89,12 +87,43 @@ void init_paging(void)
 	page_pool_init(&user_pool, user_pages, base + kernel_pages * PAGESIZE);
 }
 
+void *get_user_base(void)
+{
+	return user_pool.base;
+}
+
+void *get_kernel_base(void)
+{
+	return kernel_pool.base;
+}
+
+size_t get_user_pages(void)
+{
+	return user_pool.pages;
+}
+
+size_t get_kernel_pages(void)
+{
+	return kernel_pool.pages;
+}
+
+void *page_allocate_multiple(enum page_allocation_flags flags, size_t pages)
+{
+	struct page_pool *pool = (flags & PAL_USER) ? &user_pool : &kernel_pool;
+
+	void *page = page_pool_alloc(pool, pages);
+	if (page && (flags & PAL_ZERO))
+		memset(page, 0, PAGESIZE * pages);
+
+	return page;
+}
+
 void *page_allocate(enum page_allocation_flags flags)
 {
 	struct page_pool *pool = (flags & PAL_USER) ? &user_pool : &kernel_pool;
 
 	void *page = page_pool_alloc(pool, 1);
-	if (flags & PAL_ZERO)
+	if (page && (flags & PAL_ZERO))
 		memset(page, 0, PAGESIZE);
 
 	return page;

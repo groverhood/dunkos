@@ -281,7 +281,12 @@ static char *write_format(char *dest, const struct format_arg_info *pfarg, va_li
 		int chr = va_arg(argv, int);
 		*dest++ = chr; 
 	} break;
-	case FMTDATA_STR: break; 
+	case FMTDATA_STR: {
+		const char *str = va_arg(argv, const char *);
+		size_t len = strlen(str);
+		memcpy(dest, str, len);
+		dest = dest + len;
+	} break; 
 	case FMTDATA_FLT: break;
 	case FMTDATA_ESC: *dest++ = '%'; break;
 	}

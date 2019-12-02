@@ -4,6 +4,7 @@
 #include <kern/heap.h>
 #include <kern/pml4.h>
 #include <kern/asm.h>
+#include <kern/vmmgmt.h>
 #include <string.h>
 
 static void process_init(struct process *pr)
@@ -13,7 +14,7 @@ static void process_init(struct process *pr)
     thread_init(thr);
     thr->magic = PROCESS_MAGIK;
     pr->exit_code = -1;
-    pr->pml4 = pml4_alloc();
+    page_table_create(&pr->spt);
 }
 
 struct process *current_process(void)
@@ -41,10 +42,9 @@ struct process *fork_process(void)
     return pr;
 }
 
-
 void exec_process(const char *file, char **argv)
 {
-
+    
 }
 
 __attribute__((noreturn)) void exit_process(int status)
@@ -62,8 +62,7 @@ __attribute__((noreturn)) void exit_process(int status)
             semaphore_inc(&((struct process *)chld)->reap_sema);
     }
 
-    pml4_activate(NULL);
-    pml4_destroy(cur->pml4);
+    page_table_destroy(cur->spt);
 
     semaphore_inc(&cur->wait_sema);
     semaphore_dec(&cur->reap_sema);

@@ -1,11 +1,13 @@
 
 TARGET = x86_64-elf
 OPT_LVL = -O2
+CC_FLAGS = -c $(OPT_LVL) -mgeneral-regs-only -mno-red-zone -D_DEBUG
 LD = ../cross/bin/$(TARGET)-ld
 AS = ../cross/bin/$(TARGET)-as
-CC = ../cross/bin/$(TARGET)-gcc -c $(OPT_LVL) -mgeneral-regs-only -mno-red-zone
+CC = ../cross/bin/$(TARGET)-gcc $(CC_FLAGS)
 BUILD_DIR = .build
 BOOT_DIR = bs
+DISK_SIZE = 64M
 
 LIB_INCLUDES = -Ilib/include
 
@@ -18,7 +20,7 @@ LIB_SSOURCES = $(shell find ./lib -regex '.*\.s' -not -path '*/usr/*' -type f -p
 LIB_SUB_OBJECTS = $(foreach o, $(LIB_CSOURCES:%.c=%.o) $(LIB_SSOURCES:%.s=%.o), $(BUILD_DIR)/$(notdir $(o)))
 LIB_OBJECT = $(BUILD_DIR)/lib.o
 
-all: fresh image clean
+all: fresh image disk clean
 
 fresh:
 	rm -vf $(BUILD_DIR)/* && rm -vf $(BOOT_DIR)/iso/boot/kernel.bin && mkdir -p $(BUILD_DIR)
@@ -28,6 +30,9 @@ image: kernel
 
 kernel: kern-object lib-object
 	$(LD) -n -o $(BOOT_DIR)/iso/boot/kernel.bin -T $(BOOT_DIR)/boot.ld $(KERN_OBJECT) $(LIB_OBJECT)
+
+disk:
+	qemu-img create -f qcow2 $(BUILD_DIR)/dunkos.img $(DISK_SIZE)
 
 # =======================
 # === BEGIN BOOT MAKE ===
@@ -81,10 +86,4 @@ clean:
 	rm -vf $(BUILD_DIR)/*.o
 
 run: all
-	qemu-system-x86_64 -cdrom $(BUILD_DIR)/kernel.iso --curses -m 512
-
-run-simple:
-	qemu-system-x86_64 -cdrom $(BUILD_DIR)/kernel.iso --curses -m 512
-
-run-window:
-	qemu-system-x86_64 -cdrom $(BUILD_DIR)/kernel.iso -m 512
+	qemu-system-x86_64 -hda $(BUILD_DIR)/dunkos.img -cdrom $(BUILD_DIR)/kernel.iso --curses -m 512

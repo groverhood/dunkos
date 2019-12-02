@@ -172,6 +172,17 @@ struct list_elem *list_bestfit(struct list *li, list_comparator *cmp)
 	return best;
 }
 
+void list_foreach(struct list *l, list_action *action, void *aux)
+{
+	if (aux == NULL)
+		aux = l;
+
+	struct list_elem *el;
+	for (el = list_begin(l); el != list_end(l); el = list_next(el)) {
+		action(el, aux);
+	}
+}
+
 void elem_swap(struct list_elem *lf, struct list_elem *ri) 
 {
 	struct list_elem *lpr = lf->prev;

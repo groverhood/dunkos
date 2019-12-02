@@ -64,7 +64,6 @@ bool _enable_apic(void)
 		wrmsr(0x01B, (uintptr_t)kernel_to_phys(apic_base) | APIC_ENABLE | APIC_BSP_PROCESSOR);
 	}
 	
-	printf("APIC base: %p\n", apic_base);
-
+	printf("APIC base: %p\n", rdmsr(APIC_BASE) & ~0xFFF);
 	return enabled_apic;
 }

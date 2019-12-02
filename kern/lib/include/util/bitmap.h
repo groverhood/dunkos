@@ -25,5 +25,6 @@ void bitmap_set(struct bitmap *, size_t start, size_t nbits, bit);
 void bitmap_flip(struct bitmap *bm, size_t start, size_t nbits);
 size_t bitmap_scan(struct bitmap *, size_t start, size_t nbits, bit);
 size_t bitmap_scan_and_flip(struct bitmap *, size_t start, size_t nbits, bit);
+bool bitmap_all(struct bitmap *, size_t start, size_t nbits, bit);
 
 #endif

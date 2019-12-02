@@ -6,19 +6,37 @@
 #include <kern/synch.h>
 #include <util/list.h>
 #include <kern/memory.h>
+#include <kern/asm.h>
 
 /* Frame table. Used as a cursor over the page allocation interface. */
 
 struct frame {
     struct list aliases;
-    struct lock pin_lock;
-    bool pin;
+    _Atomic bool pin;
 };
 
 void init_frame_table(void);
 
 struct frame *allocate_frame(void);
 struct frame *evict_frame(void);
+
+static inline void frame_pin(struct frame *f)
+{
+    barrier();
+    f->pin = true;
+}
+
+static inline void frame_unpin(struct frame *f)
+{
+    barrier();
+    f->pin = false;
+}
+
+static inline bool frame_pinned(struct frame *f)
+{
+    barrier();
+    return f->pin;
+}
 
 void *frame_to_kernaddr(struct frame *);
 
@@ -36,6 +54,11 @@ void page_write_to_disk(struct page *);
 /* Supplemental page table interface. Use this as opposed to the PML4 interface. */
 struct page_table;
 
+enum readonly_violation_policy {
+    ROVP_EXCEPT,
+    ROVP_COPY
+};
+
 struct page {
     struct frame *phys;
     void *useraddr;
@@ -44,14 +67,18 @@ struct page {
     struct list_elem alias_elem;
 
     bool ondisk;
+    bool readonly;
+
+    enum readonly_violation_policy rovp;
 };
 
 void page_table_create(struct page_table **);
 void page_table_copy(struct page_table *dest, const struct page_table *src);
+void page_table_destroy(struct page_table *);
 
-extern void *reserved_end;
+extern uintptr_t reserved_end;
 
-#define USERLIMIT reserved_end
+#define USERLIMIT (void *)reserved_end
 #define STACKMAX (1 * GB)
 #define STACKLIMIT ((void *)((size_t)PHYSBASE - STACKMAX))
 

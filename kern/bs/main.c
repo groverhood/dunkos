@@ -9,6 +9,8 @@
 #include <kern/thread.h>
 #include <kern/heap.h>
 #include <kern/process.h>
+#include <kern/block.h>
+#include <kern/ide.h>
 #include <system.h>
 #include <algo.h>
 
@@ -30,10 +32,14 @@ void kernel(void)
 	init_heap();
 	puts("Memory system initialized!\n");
 
+	puts("\nInitializing threads...");
 	init_threads();
 	init_syscalls();
 	init_timer();
 	puts("Threads initialized!");
+
+	//init_ide();
+	//init_block_devices();
 
 	// /* Begin the terminal shell. */
 	// if (fork() == 0) {
