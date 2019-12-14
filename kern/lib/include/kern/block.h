@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+#define BLOCK_SECTOR_SIZE ((size_t)512)
+
 struct block;
 
 void init_block_devices(void);

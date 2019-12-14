@@ -11,6 +11,7 @@
 #include <kern/process.h>
 #include <kern/block.h>
 #include <kern/ide.h>
+#include <kern/filesys.h>
 #include <system.h>
 #include <algo.h>
 
@@ -38,8 +39,11 @@ void kernel(void)
 	init_timer();
 	puts("Threads initialized!");
 
-	//init_ide();
-	//init_block_devices();
+	puts("\nInitializing filesystem...");
+	init_ide();
+	init_block_devices();
+	init_filesystem();
+	puts("Filesystem initialized!");
 
 	// /* Begin the terminal shell. */
 	// if (fork() == 0) {

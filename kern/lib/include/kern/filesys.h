@@ -30,6 +30,7 @@ void file_set_info(struct file *, uint64_t infomask);
 
 ssize_t file_read_at(struct file *, void *dest, off_t at, size_t count);
 ssize_t file_write_at(struct file *, const void *src, off_t at, size_t count);
+void file_flush(struct file *);
 
 bool file_isdir(struct file *);
 

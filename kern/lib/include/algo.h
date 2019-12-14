@@ -42,4 +42,6 @@ inline static size_t hash_uint64(uint64_t h)
 	return h;
 }
 
+#define div_rnd_up(n, d) (((n) + (d) - 1) / (d))
+
 #endif
