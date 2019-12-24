@@ -1,6 +1,5 @@
 #include <system.h>
 #include <stdint.h>
-#include <sysn.h>
 
 #define SYSCALL_CLOBBER "rcx", "r11", "memory"
 #define SYSCALL_ASM __asm__ volatile
@@ -48,7 +47,6 @@ pid_t getpid(void)
     return syscall0(pid_t, SYS_GETPID);
 }
 
-
 int exec(const char *file, char **argv)
 {
     return syscall2(int, SYS_EXEC, file, argv);
@@ -64,10 +62,9 @@ int wait(pid_t p)
     return syscall1(int, SYS_WAIT, p);
 }
 
-
-bool create(const char *file)
+bool create(const char *file, mode_t m)
 {
-    return syscall1(bool, SYS_CREATE, file);
+    return syscall2(bool, SYS_CREATE, file, m);
 }
 
 bool remove(const char *file)
@@ -75,6 +72,10 @@ bool remove(const char *file)
     return syscall1(bool, SYS_REMOVE, file);
 }
 
+bool chmod(const char *file, mode_t m)
+{
+    return syscall2(bool, SYS_CHMOD, file, m);
+}
 
 int open(const char *file)
 {
@@ -86,6 +87,10 @@ void close(int fd)
     syscall1(void, SYS_CLOSE, fd);
 }
 
+bool chmodfd(int fd, mode_t m)
+{
+    return syscall2(bool, SYS_CHMODFD, fd, m);
+}
 
 ssize_t write(int fd, const void *src, size_t bytes)
 {
@@ -95,4 +100,14 @@ ssize_t write(int fd, const void *src, size_t bytes)
 ssize_t read(int fd, void *dest, size_t bytes)
 {
     return syscall3(ssize_t, SYS_READ, fd, dest, bytes);
+}
+
+void sleep(long ms)
+{
+    syscall1(void, SYS_SLEEP, ms);
+}
+
+void sleepts(const struct timespec *ts)
+{
+    syscall1(void, SYS_SLEEPTS, ts);
 }

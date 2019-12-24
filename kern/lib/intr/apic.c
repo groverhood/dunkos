@@ -28,7 +28,7 @@ static inline void set_apic(int what, uint32_t val)
 	apic_base[ofs] |= val;
 }
 
-void _enable_apic_timer(void)
+void _enable_apic_timer(int64_t quantum)
 {
 	/* Set to periodic mode. This will automatically unmask the
 	   apic timer (the mask we send through does not have bit 16 
@@ -37,7 +37,7 @@ void _enable_apic_timer(void)
 	set_apic(APIC_TIMER_OFS, APIC_TIMER_PRD | INTR_TYPE_TIMER);
 
 	/* 200 ticks. */
-	set_apic(APIC_COUNT_OFS, 200);
+	set_apic(APIC_COUNT_OFS, quantum);
 	/* Divide by 1. */
 	set_apic(APIC_DVCFG_OFS, 0x0B);
 

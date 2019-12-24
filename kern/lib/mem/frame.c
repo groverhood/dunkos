@@ -6,7 +6,7 @@ static struct frame *frame_table;
 
 void init_frame_table(void)
 {
-	size_t user_pages = get_user_pages()
+	size_t user_pages = get_user_pages();
 	frame_table = calloc(user_pages, sizeof *frame_table);
 
 	struct frame *f = frame_table;

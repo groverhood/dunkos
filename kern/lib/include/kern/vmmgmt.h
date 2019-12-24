@@ -6,6 +6,7 @@
 #include <kern/synch.h>
 #include <util/list.h>
 #include <kern/memory.h>
+#include <kern/filesys.h>
 #include <kern/asm.h>
 
 /* Frame table. Used as a cursor over the page allocation interface. */
@@ -44,12 +45,9 @@ void *frame_to_kernaddr(struct frame *);
 
 struct page_disk_storage {
     /* Offset either into a file or a sector number. */
-    uint64_t offset;
+    off_t offset;
     struct file *source;
 };
-
-void page_read_from_disk(struct page *);
-void page_write_to_disk(struct page *);
 
 /* Supplemental page table interface. Use this as opposed to the PML4 interface. */
 struct page_table;
@@ -70,7 +68,11 @@ struct page {
     bool readonly;
 
     enum readonly_violation_policy rovp;
+    struct page_disk_storage diskrep;
 };
+
+void page_read_from_disk(struct page *);
+void page_write_to_disk(struct page *);
 
 void page_table_create(struct page_table **);
 void page_table_copy(struct page_table *dest, const struct page_table *src);
@@ -78,11 +80,12 @@ void page_table_destroy(struct page_table *);
 
 extern uintptr_t reserved_end;
 
-#define USERLIMIT (void *)reserved_end
+#define USERLIMIT (void *)&reserved_end
 #define STACKMAX (1 * GB)
 #define STACKLIMIT ((void *)((size_t)PHYSBASE - STACKMAX))
 
 bool page_is_valid(void *);
 void page_load(void *);
+void page_defer_load(void *, struct file *, off_t ofs, bool readonly);
 
 #endif

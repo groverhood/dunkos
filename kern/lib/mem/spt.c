@@ -21,7 +21,7 @@ static bool page_equal(struct list_elem *l, struct list_elem *r)
 
 static size_t page_hash(struct list_elem *e)
 {
-    return hash_uint64((uint64_t)elem_value(e, struct page, bucket_elem)->useraddr)
+    return hash_uint64((uint64_t)elem_value(e, struct page, bucket_elem)->useraddr);
 }
 
 void page_table_create(struct page_table **ppt)
@@ -42,7 +42,8 @@ static void page_copy(struct list_elem *src_e, void *dest_pt_)
     memcpy(pg, src_pg, sizeof *pg);
 
     /* Copy-on-write. */
-    pg->rovp = ROVP_COPY;
+    if (src_pg->rovp != ROVP_EXCEPT)
+        pg->rovp = ROVP_COPY;
     pg->readonly = true;
 
     list_push_back(&pg->phys->aliases, &pg->alias_elem);
@@ -56,10 +57,9 @@ void page_table_copy(struct page_table *dest, const struct page_table *src)
     hashtable_foreach(&src->con, &page_copy, dest);
 }
 
-static void page_destroy(struct list_elem *e, void *l_)
+static void page_destroy(struct list_elem *e, void *aux)
 {
     struct page *pg = elem_value(e, struct page, bucket_elem);
-    struct list *l = l_;
     pml4_clear_mapping(current_process()->spt->pml4, pg->useraddr);
     free(pg);
 }

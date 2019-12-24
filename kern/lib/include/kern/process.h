@@ -1,18 +1,15 @@
 #ifndef DUNKOS_PROCESS_H
 #define DUNKOS_PROCESS_H
 
-#include <kern/synch.h>
 #include <util/list.h>
+#include <util/hashtable.h>
+#include <kern/synch.h>
 #include <kern/thread.h>
 #include <kern/vmmgmt.h>
 
 #define PROCESS_MAGIK (~KTHREAD_MAGIK)
 
 typedef tid_t pid_t;
-
-struct process_context {
-	
-};
 
 struct process {
 	struct thread base;
@@ -34,6 +31,7 @@ struct process {
 	struct dir *cwd;
 
 	struct page_table *spt;
+	struct fdtable *fdtable;
 
 	uint8_t *code_segment_begin;
 	uint8_t *code_segment_end;
@@ -61,6 +59,8 @@ static inline struct process *process_get_parent(struct process *p)
 }
 
 void init_syscalls(void);
+
+void process_init(struct process *);
 
 struct process *current_process(void);
 

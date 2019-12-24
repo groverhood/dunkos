@@ -1,6 +1,7 @@
 #include <system.h>
-#include <sysn.h>
 #include <kern/asm.h>
+#include <kern/timer.h>
+#include <kern/fdtable.h>
 #include <stdint.h>
 
 /* IA32_LSTAR msr. */
@@ -27,6 +28,10 @@ void init_syscalls(void)
     syscall_table[SYS_REMOVE] = &remove;
     syscall_table[SYS_WAIT] = &wait;
     syscall_table[SYS_WRITE] = &write;
+    syscall_table[SYS_CHMOD] = &chmod;
+    syscall_table[SYS_CHMODFD] = &chmodfd;
+    syscall_table[SYS_SLEEP] = &sleep;
+    syscall_table[SYS_SLEEPTS] = &sleepts;
 
     wrmsr(SYSCALL_ADDR, (uint64_t)&syscall_handler);
 }
@@ -89,32 +94,54 @@ int wait(pid_t p)
     return (status);
 }
 
-bool create(const char *file)
+bool create(const char *file, mode_t m)
 {
-
+    return create_file(current_process()->cwd, file, m);
 }
 
 bool remove(const char *file)
 {
-
+    return remove_file(current_process()->cwd, file);
 }
 
 int open(const char *file)
 {
-
+    return fd_get(fdtable_open(current_process()->fdtable, file));
 }
 
 void close(int fd)
 {
+    fdtable_free(current_process()->fdtable, fd);
+}
 
+bool eof(int fd)
+{
+    return fd_eof(fdtable_lookupfd(current_process()->fdtable, fd));
 }
 
 ssize_t write(int fd, const void *src, size_t bytes)
 {
-
+    return fd_write(fdtable_lookupfd(current_process()->fdtable, fd), src, bytes);
 }
 
 ssize_t read(int fd, void *dest, size_t bytes)
 {
+    return fd_read(fdtable_lookupfd(current_process()->fdtable, fd), dest, bytes);
+}
 
+void sleep(long ms)
+{
+    int64_t nano = (ms * NANO_PER_SEC / MS_PER_SEC) % NANO_PER_SEC;
+    int64_t seconds = (ms / MS_PER_SEC);
+
+    struct timespec ts;
+    ts.nanoseconds = nano;
+    ts.seconds = seconds;
+
+    sleep_timespec(&ts);
+}
+
+void sleepts(const struct timespec *ts)
+{
+    sleep_timespec(ts);
 }

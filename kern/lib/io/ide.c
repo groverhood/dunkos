@@ -2,6 +2,8 @@
 #include <kern/ide.h>
 #include <kern/asm.h>
 #include <kern/synch.h>
+#include <kern/block.h>
+#include <kern/memory.h>
 #include <stdbool.h>
 #include <interrupt.h>
 #include <algo.h>
@@ -43,7 +45,7 @@ void ide_read_sectors(uint32_t start, int sectors, void *dest)
 	expecting_interrupt = true;
 	outb(IDE_READ, 0x1F7);
 	semaphore_dec(&dma_sema);
-	insb(0x1F0, dest, sectors_to_read * SECTOR_SIZE);
+	insb(0x1F0, dest, sectors_to_read * BLOCK_SECTOR_SIZE);
 	lock_release(&ide_lock);
 }
 
@@ -60,7 +62,7 @@ void ide_write_sectors(uint32_t start, int sectors, void *src)
 	outb(getbyte(start, 3), 0x1F6);
 	expecting_interrupt = true;
 	outb(IDE_READ, 0x1F7);
-	outsb(src, 0x1F0, sectors_to_write * SECTOR_SIZE);
+	outsb(src, 0x1F0, sectors_to_write * BLOCK_SECTOR_SIZE);
 	semaphore_dec(&dma_sema);
 	lock_release(&ide_lock);
 }

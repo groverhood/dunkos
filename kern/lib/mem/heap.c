@@ -11,6 +11,7 @@
 #include <kern/synch.h>
 #include <kern/paging.h>
 #include <kern/thread.h>
+#include <util/debug.h>
 #include <util/list.h>
 
 struct heap_desc {
@@ -103,6 +104,7 @@ void *malloc(size_t size)
 				}
 			}
 
+			assert(a->magic == ARENA_MAGIC);
 			b = elem_value(list_pop_front(&d->free_list), struct heap_block, free_elem);
 			memset(b, 0, d->block_size);
 			a = block_get_arena(b);
@@ -125,6 +127,9 @@ void *calloc(size_t nmemb, size_t size)
 
 void free(void *p)
 {
+	if (p == NULL)
+		return;
+
 	struct heap_block *b = p;
 	struct heap_arena *a = block_get_arena(p);
 	struct heap_desc *d = a->desc;

@@ -33,5 +33,6 @@ void hashtable_destroy(struct hashtable *, hash_action *destructor, void *aux);
 struct list_elem *hashtable_find(struct hashtable *, struct list_elem *);
 void hashtable_insert(struct hashtable *, struct list_elem *);
 void hashtable_foreach(struct hashtable *, hash_action *action, void *aux);
+void hashtable_remove(struct hashtable *, struct list_elem *);
 
 #endif

@@ -5,9 +5,15 @@
 #include <kern/pml4.h>
 #include <kern/asm.h>
 #include <kern/vmmgmt.h>
+#include <kern/filesys.h>
+#include <kern/fdtable.h>
+#include <util/debug.h>
+#include <util/bitmap.h>
 #include <string.h>
 
-static void process_init(struct process *pr)
+#define FDCOUNT (128)
+
+void process_init(struct process *pr)
 {
     /* Same as &pr->base. */
     struct thread *thr = (struct thread *)pr;
@@ -15,6 +21,7 @@ static void process_init(struct process *pr)
     thr->magic = PROCESS_MAGIK;
     pr->exit_code = -1;
     page_table_create(&pr->spt);
+    pr->fdtable = create_fdtable(pr->cwd, FDCOUNT);
 }
 
 struct process *current_process(void)
@@ -42,9 +49,84 @@ struct process *fork_process(void)
     return pr;
 }
 
+static void load_segment(void *start, struct file *source, off_t ofs, 
+                         off_t size, bool readonly)
+{
+    uint8_t *page = start;
+    while (size > 0) {
+        page_defer_load(page, source, ofs, readonly);
+
+        ofs += PAGESIZE;
+        page += PAGESIZE;
+        size -= PAGESIZE;
+    }
+}
+
+#define ELF_MAGIK (*(uint32_t *)((char[]){ 0x7F, 'E', 'L', 'F' }))
+
+struct elf_header {
+    uint32_t magic;
+    uint8_t class;
+    uint8_t endianness;
+    uint8_t version;
+    uint8_t osabi;
+    uint8_t abiversion;
+    uint8_t pad[7];
+    uint16_t type;
+    uint16_t machine;
+    uint32_t elfversion;
+    void *entrypoint;
+    off_t progheader;
+    off_t sectheader;
+    uint32_t flags;
+    uint16_t size;
+    uint16_t phentsize;
+    uint16_t phentcnt;
+    uint16_t shentsize;
+    uint16_t shentcnt;
+    uint16_t shnameidx;
+} __attribute__((packed));
+
+struct program_header {
+    uint32_t type;
+    uint32_t flags;
+    off_t offset;
+    void *vaddr;
+    void *paddr;
+    off_t size;
+    off_t memsz;
+    uint64_t align;
+} __attribute__((packed));
+
 void exec_process(const char *file, char **argv)
 {
+    assert(sizeof(struct elf_header) == 0x40);
+    struct process *cur = current_process();
+    struct file *executable = open_file(cur->cwd, file);
+
+    cur->executable = executable;
+
+    struct elf_header header;
+    file_read_at(executable, &header, 0, sizeof header);
+
+    assert(header.magic == ELF_MAGIK);
     
+    if (header.phentcnt > 0) {
+        struct program_header *pht = calloc(header.phentcnt, sizeof *pht);
+        file_read_at(executable, pht, header.progheader, 
+                     header.phentcnt * header.phentsize);
+
+        off_t pht_index;
+        for (pht_index = 0; pht_index < header.phentcnt; ++pht_index) {
+            struct program_header *phte = (pht + pht_index);
+            if (phte->type == 0x1) {
+                load_segment(phte->vaddr, executable, phte->offset, 
+                             phte->size, !!(phte->flags & FILEINFO_MODE_R));
+            }
+        }
+
+        free(pht);
+    }
 }
 
 __attribute__((noreturn)) void exit_process(int status)

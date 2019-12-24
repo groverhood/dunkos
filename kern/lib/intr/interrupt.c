@@ -117,8 +117,6 @@ void isr_common_stub(interrupt_code_t intr, void *intrframe_,
 	old_level = set_interrupt_level(INTR_CONTEXT);
 	action = intr_table[intr].handler(intr_table + intr, intrframe_, registers);
 	set_interrupt_level(old_level);
-	if (action == INTRDEFR_YIELD)
-		yield_current();
 }
 
 void install_interrupt_handler(enum interrupt_type which, interrupt_handler *handler)

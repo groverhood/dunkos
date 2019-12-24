@@ -8,7 +8,7 @@ struct block {
 	uint32_t start;
 	uint32_t size;
 	struct lock lock;
-	uint8_t remainder[SECTOR_SIZE];
+	uint8_t remainder[BLOCK_SECTOR_SIZE];
 };
 
 struct block block_devices[BLOCK_COUNT];
@@ -19,7 +19,7 @@ void init_block_devices(void)
 	for (i = 0; i < BLOCK_COUNT; ++i) {
 		struct block *b = (block_devices + i);
 		lock_init(&b->lock);
-		memset(b->remainder, 0, SECTOR_SIZE);
+		memset(b->remainder, 0, BLOCK_SECTOR_SIZE);
 	}
 
 
@@ -44,34 +44,34 @@ ssize_t block_read(struct block *b, void *dest, size_t start, size_t bytes)
 {
 	lock_acquire(&b->lock);
 	uint32_t sector_start = b->start + (uint32_t)start;
-	uint32_t sectors = (bytes / SECTOR_SIZE);
-	uint32_t rem = (bytes % SECTOR_SIZE);
+	uint32_t sectors = (bytes / BLOCK_SECTOR_SIZE);
+	uint32_t rem = (bytes % BLOCK_SECTOR_SIZE);
 
 	ide_read_sectors(sector_start, sectors, dest);
 
 	if (rem != 0) {
 		ide_read_sectors(sector_start + sectors, 1, b->remainder);
-		memcpy((uint8_t *)dest + sectors * SECTOR_SIZE, b->remainder, rem);
+		memcpy((uint8_t *)dest + sectors * BLOCK_SECTOR_SIZE, b->remainder, rem);
 	}
 
 	lock_release(&b->lock);
-	return (ssize_t)SECTOR_SIZE - (ssize_t)rem;
+	return (ssize_t)BLOCK_SECTOR_SIZE - (ssize_t)rem;
 }
 
 ssize_t block_write(struct block *b, const void *src, size_t start, size_t bytes)
 {
 	lock_acquire(&b->lock);
 	uint32_t sector_start = b->start + (uint32_t)start;
-	uint32_t sectors = (bytes / SECTOR_SIZE);
-	uint32_t rem = (bytes % SECTOR_SIZE);
+	uint32_t sectors = (bytes / BLOCK_SECTOR_SIZE);
+	uint32_t rem = (bytes % BLOCK_SECTOR_SIZE);
 
 	ide_write_sectors(sector_start, sectors, (void *)src);
 
 	if (rem != 0) {
-		memcpy(b->remainder, (uint8_t *)src + sectors * SECTOR_SIZE, rem);
+		memcpy(b->remainder, (uint8_t *)src + sectors * BLOCK_SECTOR_SIZE, rem);
 		ide_write_sectors(sector_start + sectors, 1, b->remainder);
 	}
 
 	lock_release(&b->lock);
-	return (ssize_t)SECTOR_SIZE - (ssize_t)rem;
+	return (ssize_t)BLOCK_SECTOR_SIZE - (ssize_t)rem;
 }

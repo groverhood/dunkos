@@ -33,17 +33,18 @@ void kernel(void)
 	init_heap();
 	puts("Memory system initialized!\n");
 
-	puts("\nInitializing threads...");
-	init_threads();
-	init_syscalls();
-	init_timer();
-	puts("Threads initialized!");
+	
+	// puts("\nInitializing threads...");
+	// init_threads();
+	// init_syscalls();
+	// init_timer();
+	// puts("Threads initialized!");
 
-	puts("\nInitializing filesystem...");
-	init_ide();
-	init_block_devices();
-	init_filesystem();
-	puts("Filesystem initialized!");
+	// puts("\nInitializing filesystem...");
+	// init_ide();
+	// init_block_devices();
+	// init_filesystem();
+	// puts("Filesystem initialized!");
 
 	// /* Begin the terminal shell. */
 	// if (fork() == 0) {

@@ -4,12 +4,15 @@
 #include <kern/synch.h>
 #include <kern/heap.h>
 #include <kern/timer.h>
+#include <kern/process.h>
 #include <stdio.h>
 #include <algo.h>
 #include <kern/asm.h>
 
 static struct list ready_threads;
 static struct thread *running_thread;
+
+/* Doubles as the idle thread after startup. */
 static struct thread *initial_thread;
 static tid_t next_tid;
 
@@ -24,14 +27,17 @@ static thread_function idle_thread_func;
 void init_threads(void)
 {
 	list_init(&ready_threads);
+	struct process *initial_process;
 
 	next_tid = 0;
 
 	/* The initial thread's stack has already been supplied
 	   in the reserved region of physical memory. */
-	initial_thread = calloc(1, sizeof *initial_thread);
-	thread_init(initial_thread);
-	
+	initial_process = calloc(1, sizeof *initial_process);
+	process_init(initial_process);
+
+	initial_thread = process_get_base(initial_process);
+
 	threads_init = true;
 	running_thread = initial_thread;
 }
@@ -166,6 +172,8 @@ __attribute__((noreturn)) void switch_to(struct thread *prev, struct thread *nex
 		"jmp *%1" 
 		:: "m" (next->context.sp), "r" (ip)
 	);
+
+	set_interrupt_level(INTR_ENABLED);
 }
 
 __attribute__((noreturn)) void schedule_next(void) 
@@ -174,6 +182,7 @@ __attribute__((noreturn)) void schedule_next(void)
 	struct thread *prev = running_thread;
 	running_thread = next;
 	switch_to(prev, next);
+	unreachable();
 }
 
 __attribute__((noreturn)) void exit_thread(void)
@@ -191,14 +200,6 @@ static bool thread_priority_highest(struct list_elem *le, struct list_elem *ri)
 static tid_t assign_id(void)
 {
 	return next_tid++;
-}
-
-__attribute__((noreturn)) static void idle_thread_func(void *aux)
-{
-	puts("Idling...");
-	
-	while (1);
-	__builtin_unreachable();
 }
 
 /* SYNCHRONIZATION IMPL */
