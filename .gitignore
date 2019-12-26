@@ -2,7 +2,7 @@
 *.bin
 
 cross/*
-!cross/build-cross.sh
+!cross/build-cross.*
 
 .build
 .vscode
