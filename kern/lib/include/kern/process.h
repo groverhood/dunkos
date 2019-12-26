@@ -3,9 +3,9 @@
 
 #include <util/list.h>
 #include <util/hashtable.h>
-#include <kern/synch.h>
-#include <kern/thread.h>
-#include <kern/vmmgmt.h>
+#include <synch.h>
+#include <thread.h>
+#include <vmmgmt.h>
 
 #define PROCESS_MAGIK (~KTHREAD_MAGIK)
 

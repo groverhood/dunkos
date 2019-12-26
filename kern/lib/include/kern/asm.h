@@ -2,7 +2,7 @@
 #define DUNKOS_KERN_ASM_H
 
 #include <stdint.h>
-#include <kern/msr.h>
+#include <msr.h>
 
 #define atomic _Atomic
 #define _Unused __attribute__((unused))

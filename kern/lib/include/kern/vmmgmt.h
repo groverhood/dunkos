@@ -3,11 +3,11 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <kern/synch.h>
+#include <synch.h>
 #include <util/list.h>
-#include <kern/memory.h>
-#include <kern/filesys.h>
-#include <kern/asm.h>
+#include <memory.h>
+#include <filesys.h>
+#include <asm.h>
 
 /* Frame table. Used as a cursor over the page allocation interface. */
 

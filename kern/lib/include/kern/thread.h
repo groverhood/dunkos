@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <interrupt.h>
 #include <util/list.h>
-#include <kern/synch.h>
+#include <synch.h>
 
 typedef int tid_t;
 

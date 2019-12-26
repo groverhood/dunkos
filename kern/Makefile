@@ -9,7 +9,7 @@ BUILD_DIR = .build
 BOOT_DIR = bs
 DISK_SIZE = 64M
 
-LIB_INCLUDES = -Ilib/include
+LIB_INCLUDES = -Ilib/include/kern -I/lib/include/shared
 
 KERN_SUB_DEPS = mb.o boot.o gdt.o long.o main.o ia32page.o
 KERN_SUB_OBJECTS = $(foreach o, $(KERN_SUB_DEPS), $(BUILD_DIR)/$(o))

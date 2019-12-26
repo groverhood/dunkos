@@ -9,7 +9,7 @@
 #ifdef __DUNKOS_USR
 typedef int pid_t;
 #else
-#include <kern/process.h>
+#include <process.h>
 #endif
 
 
