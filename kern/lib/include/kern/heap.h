@@ -5,8 +5,8 @@
 
 void init_heap(void);
 
-void *malloc(size_t);
-void *calloc(size_t nmemb, size_t size);
-void free(void *);
+void *kmalloc(size_t);
+void *kcalloc(size_t nmemb, size_t size);
+void kfree(void *);
 
 #endif

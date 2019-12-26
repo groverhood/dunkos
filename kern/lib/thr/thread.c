@@ -33,7 +33,7 @@ void init_threads(void)
 
 	/* The initial thread's stack has already been supplied
 	   in the reserved region of physical memory. */
-	initial_process = calloc(1, sizeof *initial_process);
+	initial_process = kcalloc(1, sizeof *initial_process);
 	process_init(initial_process);
 
 	initial_thread = process_get_base(initial_process);
@@ -53,7 +53,7 @@ static void start_thread(void)
 void create_thread(struct thread **dest, thread_function *fn, void *aux)
 {
 	struct thread *newthr;
-	newthr = calloc(1, sizeof *newthr + KTHREAD_STACK_SIZE);
+	newthr = kcalloc(1, sizeof *newthr + KTHREAD_STACK_SIZE);
 	*dest = newthr;
 	
 	thread_init(newthr);
@@ -164,7 +164,7 @@ void thread_unblock(struct thread *thr)
 __attribute__((noreturn)) void switch_to(struct thread *prev, struct thread *next)
 {
 	if (prev->status == THRSTAT_DEAD)
-		free(prev);
+		kfree(prev);
 
 	void *ip = next->context.ip;
 	__asm__ volatile (

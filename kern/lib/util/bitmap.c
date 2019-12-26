@@ -28,7 +28,7 @@ static inline size_t bitmap_mask(size_t bit_index)
 struct bitmap *bitmap_create(size_t bits) 
 {
 	size_t bufsize = bitmap_bufsize(bits);
-	struct bitmap *b = malloc(sizeof *b + bufsize);
+	struct bitmap *b = kmalloc(sizeof *b + bufsize);
 	memset(b, 0, sizeof *b + bufsize);
 
 	b->bitcount = bits;

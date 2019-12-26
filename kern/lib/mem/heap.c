@@ -70,7 +70,7 @@ void init_heap(void)
 	}
 }
 
-void *malloc(size_t size)
+void *kmalloc(size_t size)
 {
 	struct heap_block *b;
 	struct heap_arena *a;
@@ -117,15 +117,15 @@ void *malloc(size_t size)
 	return b;
 }
 
-void *calloc(size_t nmemb, size_t size)
+void *kcalloc(size_t nmemb, size_t size)
 {
 	/* By virtue of memory management, we will always
 	   zero out kernel pages upon allocation, and heap
-	   blocks upon calls to malloc(). */
-	return malloc(nmemb * size);
+	   blocks upon calls to kmalloc(). */
+	return kmalloc(nmemb * size);
 }
 
-void free(void *p)
+void kfree(void *p)
 {
 	if (p == NULL)
 		return;

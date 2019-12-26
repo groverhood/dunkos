@@ -334,3 +334,15 @@ int sprintf(char *dest, const char *format, ...)
 
 	return argc;
 }
+
+int printf(const char *format, ...) 
+{
+	int argc;
+	va_list argv;
+
+	va_start(argv, format);
+	argc = vprintf(format, argv);
+	va_end(argv);
+
+	return argc;
+}

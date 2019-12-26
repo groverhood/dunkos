@@ -35,7 +35,8 @@ struct file *open_file(struct dir *relative, const char *path);
 
 void file_close(struct file *);
 void file_set_info(struct file *, uint64_t infomask);
-
+uint64_t file_get_info(struct file *);
+void file_set_mode(struct file *, mode_t mode);
 ssize_t file_read(struct file *, void *dest, size_t count);
 ssize_t file_read_at(struct file *, void *dest, off_t at, size_t count);
 ssize_t file_write(struct file *, const void *src, size_t count);

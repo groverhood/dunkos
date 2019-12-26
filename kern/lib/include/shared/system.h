@@ -63,9 +63,13 @@ bool remove(const char *file);
 /* Change the mode at the given path. */
 bool chmod(const char *file, mode_t);
 
+#define OPEN_RD ((int)1)
+#define OPEN_WR ((int)2)
+#define OPEN_RW (OPEN_RD | OPEN_WR)
+
 /* Open a file stream for the provided path, 
    returning its file descriptor. */
-int open(const char *file);
+int open(const char *file, int flags);
 
 /* Close the specified file descriptor. */
 void close(int fd);

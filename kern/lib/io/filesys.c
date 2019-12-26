@@ -88,7 +88,7 @@ static void inode_disk_foreach_first_level(struct inode_disk *idisk,
 {
 	inode_disk_foreach_header(idisk, exta, cond, aux);
 	
-	struct inode_extent *extents = calloc(INODE_DISK_EXTENTS, sizeof *extents);
+	struct inode_extent *extents = kcalloc(INODE_DISK_EXTENTS, sizeof *extents);
 	block_read(fs_block, extents, idisk->first_level_table, BLOCK_SECTOR_SIZE);
 
 	bool ignore_cond = (cond == NULL);
@@ -98,7 +98,7 @@ static void inode_disk_foreach_first_level(struct inode_disk *idisk,
 		exta(extents + i, aux);
 
 	block_write(fs_block, extents, idisk->first_level_table, BLOCK_SECTOR_SIZE);
-	free(extents);
+	kfree(extents);
 }
 
 static void inode_disk_foreach_second_level(struct inode_disk *idisk,
@@ -112,10 +112,10 @@ static void inode_disk_foreach_second_level(struct inode_disk *idisk,
 	if (!at_second_level || idisk->next_first_level != 0) {
 		bool ignore_cond = (cond == NULL);
 		bool ignore_indices = (index_tablea == NULL);
-		off32_t *indices = calloc(INODE_DISK_INDICES, sizeof *indices);
+		off32_t *indices = kcalloc(INODE_DISK_INDICES, sizeof *indices);
 		block_read(fs_block, indices, idisk->second_level_table, BLOCK_SECTOR_SIZE);
 
-		struct inode_extent *extents = calloc(INODE_DISK_EXTENTS, sizeof *extents);
+		struct inode_extent *extents = kcalloc(INODE_DISK_EXTENTS, sizeof *extents);
 		size_t extent_blocks = !at_second_level ? INODE_DISK_INDICES : (idisk->next_first_level - 1);
 		size_t i, j;
 		for (i = 0; i < extent_blocks && (ignore_cond || cond(aux)); ++i) {
@@ -133,8 +133,8 @@ static void inode_disk_foreach_second_level(struct inode_disk *idisk,
 				exta(extents + i, aux);
 		}
 
-		free(indices);
-		free(extents);	
+		kfree(indices);
+		kfree(extents);	
 	}
 }
 
@@ -148,11 +148,11 @@ static void inode_disk_foreach_third_level(struct inode_disk *idisk,
 	if (idisk->next_second_level != 0) {
 		bool ignore_cond = (cond == NULL);
 		bool ignore_indices = (index_tablea == NULL);
-		off32_t *sndlvl_indices = calloc(INODE_DISK_INDICES, sizeof *sndlvl_indices);
+		off32_t *sndlvl_indices = kcalloc(INODE_DISK_INDICES, sizeof *sndlvl_indices);
 		block_read(fs_block, sndlvl_indices, idisk->third_level_table, BLOCK_SECTOR_SIZE);
 
-		off32_t *fstlvl_indices = calloc(INODE_DISK_INDICES, sizeof *sndlvl_indices);
-		struct inode_extent *extents = calloc(INODE_DISK_EXTENTS, sizeof *extents);
+		off32_t *fstlvl_indices = kcalloc(INODE_DISK_INDICES, sizeof *sndlvl_indices);
+		struct inode_extent *extents = kcalloc(INODE_DISK_EXTENTS, sizeof *extents);
 
 		size_t sndlvl, fstlvl, extent;
 		for (sndlvl = 0; sndlvl < idisk->next_second_level - 1 && (ignore_cond || cond(aux)); ++sndlvl) {
@@ -192,9 +192,9 @@ static void inode_disk_foreach_third_level(struct inode_disk *idisk,
 			exta(extents + extent, aux);
 		}
 
-		free(sndlvl_indices);
-		free(fstlvl_indices);
-		free(extents);
+		kfree(sndlvl_indices);
+		kfree(fstlvl_indices);
+		kfree(extents);
 	}
 }
 
@@ -285,7 +285,7 @@ static bool create_inode(size_t size, uint64_t info, off_t *sector)
 	bool success = (header != BITMAP_NPOS);
 
 	if (success) {
-		struct inode_disk *idisk = calloc(1, sizeof *idisk);
+		struct inode_disk *idisk = kcalloc(1, sizeof *idisk);
 		success = (idisk != NULL);
 
 		if (success) {
@@ -306,7 +306,7 @@ static bool create_inode(size_t size, uint64_t info, off_t *sector)
 				*sector = header;
 		}
 
-		free(idisk);
+		kfree(idisk);
 	}
 
 	return success;
@@ -332,7 +332,7 @@ static struct inode *open_inode(off_t sector)
 	struct inode *node = get_inode(sector);
 
 	if (node == NULL) {
-		node = calloc(1, sizeof *node);
+		node = kcalloc(1, sizeof *node);
 		ide_read_sectors((off32_t)sector, 1, &node->data);
 
 		node->open_count = 1;
@@ -407,7 +407,7 @@ static void inode_close(struct inode *node)
 			block_write(fs_block, &node->data, node->sector, BLOCK_SECTOR_SIZE);
 
 		hashtable_remove(&inode_map, &node->inode_map_elem);
-		free(node);
+		kfree(node);
 	} else {
 		lock_release(&node->lock);
 	}
@@ -451,7 +451,7 @@ bool create_file(struct dir *relative, const char *path, mode_t mode)
 					&& dir_add_file(parent, header_sector, filename));
 
 	dir_close(parent);
-	free(filename);
+	kfree(filename);
 
 	return success;
 }
@@ -464,7 +464,7 @@ bool remove_file(struct dir *relative, const char *path)
 	bool success = dir_remove(parent, filename);
 
 	dir_close(parent);
-	free(filename);
+	kfree(filename);
 
 	return success;
 }
@@ -485,11 +485,11 @@ struct file *open_file(struct dir *relative, const char *path)
 	struct file *file = NULL;
 
 	if (filename != NULL) {
-		file = calloc(1, sizeof *file);
+		file = kcalloc(1, sizeof *file);
 		init_file(file, get_inode(dir_get_mapping(parent, filename, NULL)));
 	}
 
-	free(filename);
+	kfree(filename);
 	dir_close(parent);
 
 	return file;
@@ -499,7 +499,7 @@ void file_close(struct file *f)
 {
 	if (f != NULL) {
 		inode_close(f->inode);
-		free(f);
+		kfree(f);
 	}
 }
 
@@ -582,14 +582,14 @@ struct dir *open_dir(struct dir *relative, const char *path)
 	}
 
 	if (inode != NULL) {
-		dir = calloc(1, sizeof *dir);
+		dir = kcalloc(1, sizeof *dir);
 		init_file(dir_to_file(dir), inode);
 		dir_to_file(dir)->is_directory = true;
 		dir->next_entry = DIR_BASE_OFS;
 	}
 
 	dir_close(parent);
-	free(filename);
+	kfree(filename);
 
 	return dir;
 }
@@ -626,10 +626,10 @@ bool dir_remove(struct dir *dir, char name[NAME_LENGTH])
 		success = true;
 		file_write_at(dir, ZEROES, entryofs, sizeof(struct dir_entry));
 
-		struct inode_disk *data = calloc(1, sizeof *data);
+		struct inode_disk *data = kcalloc(1, sizeof *data);
 		block_read(fs_block, data, inode_sector, sizeof *data);
 		inode_free_data(data);
-		free(data);
+		kfree(data);
 	}
 }
 
@@ -646,7 +646,7 @@ bool dir_add_file(struct dir *dir, off_t sector, char name[NAME_LENGTH])
 
 struct dir *get_root_dir(void)
 {
-	struct dir *root = calloc(1, sizeof *root);
+	struct dir *root = kcalloc(1, sizeof *root);
 	struct file *file = dir_to_file(root);
 
 	file->inode = get_inode(ROOT_DIR_SECTOR);

@@ -6,7 +6,7 @@
 
 void hashtable_init(struct hashtable *h, hash_func *f, hash_identity *id)
 {
-	h->bucket_con = calloc(INIT_BUCKETS, sizeof *h->bucket_con);
+	h->bucket_con = kcalloc(INIT_BUCKETS, sizeof *h->bucket_con);
 
 	size_t i;
 	for (i = 0; i < INIT_BUCKETS; ++i)
@@ -22,7 +22,7 @@ void hashtable_init(struct hashtable *h, hash_func *f, hash_identity *id)
 void hashtable_destroy(struct hashtable *h, hash_action *destructor, void *aux)
 {	
 	hashtable_foreach(h, destructor, aux);
-	free(h->bucket_con);
+	kfree(h->bucket_con);
 }
 
 struct list_elem *hashtable_find(struct hashtable *h, struct list_elem *e)
