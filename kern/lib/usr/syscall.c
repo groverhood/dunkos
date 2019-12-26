@@ -4,12 +4,14 @@
 #define SYSCALL_CLOBBER "rcx", "r11", "memory"
 #define SYSCALL_ASM __asm__ volatile
 
+#define reinterpret(val, ty) _Generic(((ty)val), void: (void)val, default: *(ty *)&val)
+
 #define syscall0(retval, n)\
     ({\
         uint64_t res;\
         SYSCALL_ASM ("syscall" : "=a" (res)\
         : "a" (n) : SYSCALL_CLOBBER);\
-        (retval)res;\
+        *(retval *)&res;\
     })
 
 #define syscall1(retval, n, arg0)\
@@ -17,7 +19,7 @@
         uint64_t res;\
         SYSCALL_ASM ("syscall" : "=a" (res)\
         : "a" (n), "D" (arg0) : SYSCALL_CLOBBER);\
-        (retval)res;\
+        *(retval *)&res;\
     })
 
 #define syscall2(retval, n, arg0, arg1)\
@@ -25,7 +27,7 @@
         uint64_t res;\
         SYSCALL_ASM ("syscall" : "=a" (res)\
         : "a" (n), "D" (arg0), "S" (arg1) : SYSCALL_CLOBBER);\
-        (retval)res;\
+        *(retval *)&res;\
     })
 
 #define syscall3(retval, n, arg0, arg1, arg2)\
@@ -34,7 +36,7 @@
         SYSCALL_ASM ("syscall" : "=a" (res)\
         : "a" (n), "D" (arg0), "S" (arg1), "d" (arg2)\
         : SYSCALL_CLOBBER);\
-        (retval)res;\
+        *(retval *)&res;\
     })
 
 pid_t fork(void)
@@ -77,9 +79,9 @@ bool chmod(const char *file, mode_t m)
     return syscall2(bool, SYS_CHMOD, file, m);
 }
 
-int open(const char *file)
+int open(const char *file, int flags)
 {
-    return syscall1(int, SYS_OPEN, file);
+    return syscall2(int, SYS_OPEN, file, flags);
 }
 
 void close(int fd)

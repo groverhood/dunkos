@@ -33,7 +33,7 @@ struct process *current_process(void)
 struct process *fork_process(void)
 {
     struct process *cur = current_process();
-    struct process *pr = calloc(1, sizeof *pr);
+    struct process *pr = kcalloc(1, sizeof *pr);
     
     process_init(pr);
     struct thread *thr = process_get_base(pr);
@@ -112,7 +112,7 @@ void exec_process(const char *file, char **argv)
     assert(header.magic == ELF_MAGIK);
     
     if (header.phentcnt > 0) {
-        struct program_header *pht = calloc(header.phentcnt, sizeof *pht);
+        struct program_header *pht = kcalloc(header.phentcnt, sizeof *pht);
         file_read_at(executable, pht, header.progheader, 
                      header.phentcnt * header.phentsize);
 
@@ -125,7 +125,7 @@ void exec_process(const char *file, char **argv)
             }
         }
 
-        free(pht);
+        kfree(pht);
     }
 }
 

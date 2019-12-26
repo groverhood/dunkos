@@ -1,7 +1,7 @@
 
 TARGET = x86_64-elf
 OPT_LVL = -O2
-CC_FLAGS = -c $(OPT_LVL) -mgeneral-regs-only -mno-red-zone -D_DEBUG
+CC_FLAGS = -c $(OPT_LVL) -mgeneral-regs-only -mno-red-zone -D_DEBUG -D__DUNKOS
 LD = ../cross/bin/$(TARGET)-ld
 AS = ../cross/bin/$(TARGET)-as
 CC = ../cross/bin/$(TARGET)-gcc $(CC_FLAGS)

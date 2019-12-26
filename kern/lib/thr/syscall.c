@@ -104,7 +104,7 @@ bool remove(const char *file)
     return remove_file(current_process()->cwd, file);
 }
 
-int open(const char *file)
+int open(const char *file, int flags)
 {
     return fd_get(fdtable_open(current_process()->fdtable, file));
 }

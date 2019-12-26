@@ -26,7 +26,7 @@ static size_t page_hash(struct list_elem *e)
 
 void page_table_create(struct page_table **ppt)
 {
-    struct page_table *pt = calloc(1, sizeof *pt);
+    struct page_table *pt = kcalloc(1, sizeof *pt);
     hashtable_init(&pt->con, &page_hash, &page_equal);
     pt->pml4 = pml4_alloc();
 
@@ -38,7 +38,7 @@ static void page_copy(struct list_elem *src_e, void *dest_pt_)
     struct page_table *dest_pt = dest_pt_;
     struct page *src_pg = elem_value(src_e, struct page, bucket_elem);
 
-    struct page *pg = calloc(1, sizeof *pg);
+    struct page *pg = kcalloc(1, sizeof *pg);
     memcpy(pg, src_pg, sizeof *pg);
 
     /* Copy-on-write. */
@@ -61,7 +61,7 @@ static void page_destroy(struct list_elem *e, void *aux)
 {
     struct page *pg = elem_value(e, struct page, bucket_elem);
     pml4_clear_mapping(current_process()->spt->pml4, pg->useraddr);
-    free(pg);
+    kfree(pg);
 }
 
 void page_table_destroy(struct page_table *pt)
@@ -115,7 +115,7 @@ void page_load(void *p)
     struct list_elem *pg_el = hashtable_find(con, &key.bucket_elem);
     
     if (pg_el == NULL) {
-        pg = calloc(1, sizeof *pg);
+        pg = kcalloc(1, sizeof *pg);
         pg->ondisk = false;
         pg->useraddr = p;
         hashtable_insert(con, &pg);

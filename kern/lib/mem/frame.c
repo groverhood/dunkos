@@ -7,7 +7,7 @@ static struct frame *frame_table;
 void init_frame_table(void)
 {
 	size_t user_pages = get_user_pages();
-	frame_table = calloc(user_pages, sizeof *frame_table);
+	frame_table = kcalloc(user_pages, sizeof *frame_table);
 
 	struct frame *f = frame_table;
 	while (f != frame_table + user_pages) {

@@ -25,7 +25,7 @@ size_t *get_default_pml4(void)
 
 size_t *pml4_alloc(void)
 {
-	return calloc(512, sizeof(size_t));
+	return kcalloc(512, sizeof(size_t));
 }
 
 void pml4_activate(size_t *pml4)
@@ -38,7 +38,7 @@ void pml4_activate(size_t *pml4)
 
 void pml4_destroy(size_t *pml4)
 {
-	free(pml4);
+	kfree(pml4);
 }
 
 void pml4_map_address_buffer(size_t *pml4, void *addr, void *frame)
@@ -68,14 +68,14 @@ void pml4_map_address(size_t *pml4, void *addr, void *frame)
 	uintptr_t pml4_offset = (((uintptr_t)addr) & 0xFF8000000000) >> 39;
 	size_t *pdp = (size_t *)(pml4[pml4_offset] & ~0xFFF);
 	if (pdp == NULL) {
-		pdp = kernel_to_phys(calloc(512, sizeof(size_t)));
+		pdp = kernel_to_phys(kcalloc(512, sizeof(size_t)));
 		pml4[pml4_offset] = (size_t)pdp | 0x3;
 	}
 
 	uintptr_t pdp_offset = (((uintptr_t)addr) & 0x7FC0000000) >> 30;
 	size_t *pgd = (size_t *)(pdp[pdp_offset] & ~0xFFF);
 	if (pdp == NULL) {
-		pdp = kernel_to_phys(calloc(512, sizeof(size_t)));
+		pdp = kernel_to_phys(kcalloc(512, sizeof(size_t)));
 		pdp[pml4_offset] = (size_t)pdp | 0x3;
 	}
 	
@@ -129,7 +129,7 @@ static void _pml_copy(size_t *dest_pml, const size_t *src_pml, bool cow, int lev
 		for (i = 0; i < 512; ++i) {
 			size_t e = src_pml[i];
 			if (e & ~0xFFF) {
-				size_t *pml = calloc(512, sizeof *pml);
+				size_t *pml = kcalloc(512, sizeof *pml);
 				_pml_copy(pml, phys_to_kernel((void *)(e & ~0xFFF)), cow, level - 1);
 				dest_pml[i] = (size_t)(kernel_to_phys(pml)) | ((e & 0xFFD) | writable);
 			}
