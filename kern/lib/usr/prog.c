@@ -1,4 +1,4 @@
-#include <usr/prog.h>
+#include <prog.h>
 #include <system.h>
 
 /* The user-provided main procedure. */

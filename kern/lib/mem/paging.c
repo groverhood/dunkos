@@ -1,12 +1,12 @@
 #include <stdio.h>
-#include <kern/paging.h>
-#include <kern/memory.h>
-#include <kern/pml4.h>
+#include <paging.h>
+#include <memory.h>
+#include <pml4.h>
 #include <util/bitmap.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
-#include <kern/synch.h>
+#include <synch.h>
 
 
 /* The page fault handler. */

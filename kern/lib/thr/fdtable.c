@@ -1,7 +1,7 @@
-#include <kern/fdtable.h>
-#include <kern/heap.h>
-#include <kern/filesys.h>
-#include <kern/synch.h>
+#include <fdtable.h>
+#include <heap.h>
+#include <filesys.h>
+#include <synch.h>
 #include <util/hashtable.h>
 #include <util/bitmap.h>
 #include <algo.h>
@@ -49,10 +49,12 @@ static bool fd_identity(struct list_elem *l, struct list_elem *r)
 
 struct fdtable *create_fdtable(struct dir *cwd, size_t cnt)
 {
-    struct fdtable *fdtable = calloc(1, sizeof *fdtable);
+    struct fdtable *fdtable = kcalloc(1, sizeof *fdtable);
 
     hashtable_init(&fdtable->fdmap, &hash_fd, &fd_identity);
     fdtable->freefdmap = bitmap_create(cnt);
+    /* Reserve STDIN, STDOUT, and STDERR. */
+    bitmap_set(fdtable->freefdmap, 0, 3, true);
     fdtable->cwd = cwd;
     lock_init(&fdtable->lock);
 
@@ -65,7 +67,7 @@ static void fd_free(struct fd *fd)
         case FDTYPE_FILE: file_close(fd->io_object); break;
     }
 
-    free(fd);
+    kfree(fd);
 }
 
 static void fd_destroy(struct list_elem *e, void *aux)
@@ -85,7 +87,7 @@ size_t fdtable_size(struct fdtable *fdtable)
 
 struct fd *fdtable_open(struct fdtable *fdtable, const char *path)
 {
-    struct fd *fd = calloc(1, sizeof *fd);
+    struct fd *fd = kcalloc(1, sizeof *fd);
     lock_acquire(&fdtable->lock);
     hashtable_insert(&fdtable->fdmap, &fd->bucket_elem);
 

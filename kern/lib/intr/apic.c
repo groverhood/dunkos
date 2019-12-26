@@ -4,10 +4,10 @@
 #include <stdio.h>
 #include <algo.h>
 #include <string.h>
-#include <kern/asm.h>
-#include <kern/paging.h>
-#include <kern/memory.h>
-#include <kern/pml4.h>
+#include <asm.h>
+#include <paging.h>
+#include <memory.h>
+#include <pml4.h>
 
 #define APIC_BASE ((void *)0xFEE00000)
 #define APIC_ENABLE (1 << 11)

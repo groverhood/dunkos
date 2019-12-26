@@ -1,5 +1,5 @@
 #include <util/bitmap.h>
-#include <kern/heap.h>
+#include <heap.h>
 #include <string.h>
 #include <algo.h>
 

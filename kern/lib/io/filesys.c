@@ -1,11 +1,11 @@
-#include <kern/filesys.h>
-#include <kern/block.h>
-#include <kern/ide.h>
+#include <filesys.h>
+#include <block.h>
+#include <ide.h>
 #include <util/bitmap.h>
 #include <util/debug.h>
-#include <kern/heap.h>
+#include <heap.h>
 #include <util/hashtable.h>
-#include <kern/synch.h>
+#include <synch.h>
 #include <algo.h>
 #include <string.h>
 

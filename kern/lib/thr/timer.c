@@ -1,8 +1,8 @@
 
 #include <util/list.h>
-#include <kern/timer.h>
-#include <kern/thread.h>
-#include <kern/asm.h>
+#include <timer.h>
+#include <thread.h>
+#include <asm.h>
 #include <interrupt.h>
 #include <stdio.h>
 #include <stdint.h>

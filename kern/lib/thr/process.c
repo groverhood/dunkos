@@ -1,12 +1,12 @@
 
-#include <kern/process.h>
-#include <kern/thread.h>
-#include <kern/heap.h>
-#include <kern/pml4.h>
-#include <kern/asm.h>
-#include <kern/vmmgmt.h>
-#include <kern/filesys.h>
-#include <kern/fdtable.h>
+#include <process.h>
+#include <thread.h>
+#include <heap.h>
+#include <pml4.h>
+#include <asm.h>
+#include <vmmgmt.h>
+#include <filesys.h>
+#include <fdtable.h>
 #include <util/debug.h>
 #include <util/bitmap.h>
 #include <string.h>

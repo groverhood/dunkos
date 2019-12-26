@@ -4,13 +4,13 @@
  *  go to Ben Pfaff.
  **/
 
-#include <kern/heap.h>
-#include <kern/memory.h>
+#include <heap.h>
+#include <memory.h>
 #include <stdint.h>
 #include <string.h>
-#include <kern/synch.h>
-#include <kern/paging.h>
-#include <kern/thread.h>
+#include <synch.h>
+#include <paging.h>
+#include <thread.h>
 #include <util/debug.h>
 #include <util/list.h>
 

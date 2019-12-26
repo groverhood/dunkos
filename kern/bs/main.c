@@ -2,16 +2,16 @@
 #include <stdio.h>
 #include <console.h>
 #include <interrupt.h>
-#include <kern/pml4.h>
-#include <kern/timer.h>
-#include <kern/memory.h>
-#include <kern/paging.h>
-#include <kern/thread.h>
-#include <kern/heap.h>
-#include <kern/process.h>
-#include <kern/block.h>
-#include <kern/ide.h>
-#include <kern/filesys.h>
+#include <pml4.h>
+#include <timer.h>
+#include <memory.h>
+#include <paging.h>
+#include <thread.h>
+#include <heap.h>
+#include <process.h>
+#include <block.h>
+#include <ide.h>
+#include <filesys.h>
 #include <system.h>
 #include <algo.h>
 

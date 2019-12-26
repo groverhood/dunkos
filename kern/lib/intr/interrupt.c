@@ -1,7 +1,7 @@
 
 #include <stdio.h>
 #include <interrupt.h>
-#include <kern/thread.h>
+#include <thread.h>
 #include <algo.h>
 
 extern void _init_tss(void);

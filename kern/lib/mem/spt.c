@@ -1,9 +1,9 @@
 
-#include <kern/vmmgmt.h>
-#include <kern/heap.h>
-#include <kern/process.h>
+#include <vmmgmt.h>
+#include <heap.h>
+#include <process.h>
 #include <util/hashtable.h>
-#include <kern/pml4.h>
+#include <pml4.h>
 #include <string.h>
 #include <algo.h>
 

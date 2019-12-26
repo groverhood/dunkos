@@ -1,5 +1,5 @@
 #include <util/hashtable.h>
-#include <kern/heap.h>
+#include <heap.h>
 
 #define INIT_BUCKETS (10)
 

@@ -1,7 +1,7 @@
 #include <system.h>
-#include <kern/asm.h>
-#include <kern/timer.h>
-#include <kern/fdtable.h>
+#include <asm.h>
+#include <timer.h>
+#include <fdtable.h>
 #include <stdint.h>
 
 /* IA32_LSTAR msr. */

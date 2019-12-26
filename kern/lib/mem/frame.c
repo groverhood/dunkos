@@ -1,6 +1,6 @@
 
-#include <kern/vmmgmt.h>
-#include <kern/paging.h>
+#include <vmmgmt.h>
+#include <paging.h>
 
 static struct frame *frame_table;
 

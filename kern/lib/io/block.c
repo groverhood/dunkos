@@ -1,6 +1,6 @@
-#include <kern/block.h>
-#include <kern/ide.h>
-#include <kern/synch.h>
+#include <block.h>
+#include <ide.h>
+#include <synch.h>
 #include <string.h>
 
 struct block {

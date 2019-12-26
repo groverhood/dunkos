@@ -1,8 +1,8 @@
 
-#include <kern/pml4.h>
-#include <kern/heap.h>
-#include <kern/memory.h>
-#include <kern/paging.h>
+#include <pml4.h>
+#include <heap.h>
+#include <memory.h>
+#include <paging.h>
 #include <stdint.h>
 #include <string.h>
 

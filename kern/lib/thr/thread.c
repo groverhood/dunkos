@@ -1,13 +1,13 @@
 
-#include <kern/paging.h>
-#include <kern/thread.h>
-#include <kern/synch.h>
-#include <kern/heap.h>
-#include <kern/timer.h>
-#include <kern/process.h>
+#include <paging.h>
+#include <thread.h>
+#include <synch.h>
+#include <heap.h>
+#include <timer.h>
+#include <process.h>
 #include <stdio.h>
 #include <algo.h>
-#include <kern/asm.h>
+#include <asm.h>
 
 static struct list ready_threads;
 static struct thread *running_thread;

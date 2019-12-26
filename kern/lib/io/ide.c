@@ -1,9 +1,9 @@
 
-#include <kern/ide.h>
-#include <kern/asm.h>
-#include <kern/synch.h>
-#include <kern/block.h>
-#include <kern/memory.h>
+#include <ide.h>
+#include <asm.h>
+#include <synch.h>
+#include <block.h>
+#include <memory.h>
 #include <stdbool.h>
 #include <interrupt.h>
 #include <algo.h>
