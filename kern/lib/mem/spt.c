@@ -130,3 +130,13 @@ void page_load(void *p)
     if (pg->ondisk)
         page_read_from_disk(pg);
 }
+
+void page_read_from_disk(struct page *pg)
+{
+
+}
+
+void page_write_to_disk(struct page *pg)
+{
+
+}
