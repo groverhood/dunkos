@@ -65,5 +65,7 @@ void kernel(void)
 
 static void idle_loop(void)
 {
-	yield_current();
+	if (threads_init) {
+		yield_current();
+	}
 }

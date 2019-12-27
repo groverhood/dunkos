@@ -134,6 +134,16 @@ ssize_t fd_read(struct fd *fd, void *dest, size_t bytes)
     return bytes_read;
 }
 
+bool fd_chmod(struct fd *fd, mode_t m)
+{
+    bool valid = false;
+    if (fd->type == FDTYPE_FILE) {
+        valid = true;
+        file_set_mode(fd->io_object, m);
+    }
+    return valid;
+}
+
 bool fd_eof(struct fd *fd)
 {
     /* Default to false so as to prevent I/O on an invalid file descriptor. */

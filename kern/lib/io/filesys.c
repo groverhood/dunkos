@@ -10,6 +10,7 @@
 #include <string.h>
 
 static struct block *fs_block;
+static size_t fs_free_sectors; /* size(freemap) - allocated_sectors */
 static struct bitmap *fs_free_map;
 static struct lock fs_free_map_lock;
 static struct hashtable inode_map;
@@ -216,11 +217,36 @@ static void inode_disk_foreach(struct inode_disk *idisk, inode_extent_action *ex
 	}
 }
 
+static void inode_disk_insert_extent(struct inode_disk *idisk, struct inode_extent *ext)
+{
+
+}
+
 static bool inode_disk_allocate_space(struct inode_disk *idisk, size_t sectors)
 {
-	if (inode_disk_at_header(idisk)) {
-		
+	bool success = false;
+	lock_acquire(&fs_free_map_lock);
+	if (sectors <= fs_free_sectors) {
+		success = true;
+
+		while (sectors > 0) {
+			size_t bestattempt = sectors;
+			size_t start;
+			while ((start = free_map_allocate(bestattempt)) == BITMAP_NPOS) {
+				bestattempt--;
+			}
+
+			struct inode_extent ext = { 
+				.start = (off32_t)start, 
+				.sectors = (uint32_t)bestattempt 
+			};
+			inode_disk_insert_extent(idisk, &ext);
+
+			sectors -= bestattempt;
+		}
 	}
+	lock_release(&fs_free_map_lock);
+	return success;
 }
 
 struct inode {

@@ -104,6 +104,17 @@ bool remove(const char *file)
     return remove_file(current_process()->cwd, file);
 }
 
+bool chmod(const char *file, mode_t m)
+{
+    struct file *tmpstream = open_file(current_process()->cwd, file);
+    bool validchmod = (tmpstream != NULL);
+    if (validchmod) {
+        file_set_mode(tmpstream, m);
+    }
+    file_close(tmpstream);
+    return validchmod;
+}
+
 int open(const char *file, int flags)
 {
     return fd_get(fdtable_open(current_process()->fdtable, file));
@@ -117,6 +128,11 @@ void close(int fd)
 bool eof(int fd)
 {
     return fd_eof(fdtable_lookupfd(current_process()->fdtable, fd));
+}
+
+bool chmodfd(int fd, mode_t m)
+{
+    return fd_chmod(fdtable_lookupfd(current_process()->fdtable, fd), m);
 }
 
 ssize_t write(int fd, const void *src, size_t bytes)

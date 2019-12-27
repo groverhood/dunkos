@@ -25,6 +25,7 @@ void fdtable_free(struct fdtable *, int fd);
 
 ssize_t fd_write(struct fd *, const void *, size_t);
 ssize_t fd_read(struct fd *, void *, size_t);
+bool fd_chmod(struct fd *, mode_t);
 
 bool fd_eof(struct fd *);
 int fd_get(struct fd *);

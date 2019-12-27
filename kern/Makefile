@@ -9,14 +9,14 @@ BUILD_DIR = .build
 BOOT_DIR = bs
 DISK_SIZE = 64M
 
-LIB_INCLUDES = -Ilib/include/kern -I/lib/include/shared
+LIB_INCLUDES = -Ilib/include/kern -Ilib/include/shared
 
 KERN_SUB_DEPS = mb.o boot.o gdt.o long.o main.o ia32page.o
 KERN_SUB_OBJECTS = $(foreach o, $(KERN_SUB_DEPS), $(BUILD_DIR)/$(o))
 KERN_OBJECT = $(BUILD_DIR)/kern.o
 
-LIB_CSOURCES = $(shell find ./lib -regex '.*\.c' -not -path '*/usr/*' -type f -print)
-LIB_SSOURCES = $(shell find ./lib -regex '.*\.s' -not -path '*/usr/*' -type f -print)
+LIB_CSOURCES = $(shell find ./lib -name *.c -not -path '*/usr/*' -type f -print)
+LIB_SSOURCES = $(shell find ./lib -name *.s -not -path '*/usr/*' -type f -print)
 LIB_SUB_OBJECTS = $(foreach o, $(LIB_CSOURCES:%.c=%.o) $(LIB_SSOURCES:%.s=%.o), $(BUILD_DIR)/$(notdir $(o)))
 LIB_OBJECT = $(BUILD_DIR)/lib.o
 

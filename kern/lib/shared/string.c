@@ -61,3 +61,8 @@ void *memset(void *dest, register int val, register size_t len)
 	
 	return dest;
 }
+
+int strncmp(const char *left, const char *right, size_t count)
+{
+
+}
