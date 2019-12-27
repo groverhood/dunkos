@@ -57,7 +57,7 @@ main.o:
 	$(CC) -o $(BUILD_DIR)/main.o $(LIB_INCLUDES) $(BOOT_DIR)/main.c
 
 ia32page.o:
-	$(AS) -o $(BUILD_DIR)/ia32page.o $(LIB_INCLUDES) $(BOOT_DIR)/ia32page.s
+	$(AS) -o $(BUILD_DIR)/ia32page.o $(BOOT_DIR)/ia32page.s
 
 # =======================
 # ===  END BOOT MAKE  ===

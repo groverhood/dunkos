@@ -1,10 +1,5 @@
 #include <stdio.h>
-#ifdef __DUNKOS
 #include <system.h>
-#else
-#include <sys/types.h>
-#include <unistd.h>
-#endif
 
 #define _stringify(x) #x
 #define stringify(x) _stringify(x)
