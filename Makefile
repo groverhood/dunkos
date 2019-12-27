@@ -11,3 +11,6 @@ kern:
 
 test:
 	julia tests/test.jl
+
+install:
+	julia cross/build-cross.jl
