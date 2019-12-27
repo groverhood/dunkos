@@ -1,8 +1,5 @@
-# This script assumes you have the development packages for 
-# lipgmp, libmpfr, and libmpc already installed.
-#
-# To rebuild the binaries with a fresh download, delete
-# 'build-binutils' and 'build-gcc'
+# This script is rather lengthy in time due to the process of building a gcc
+# cross compiler for x86_64-elf executables.
 
 using Glob;
 
