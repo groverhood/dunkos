@@ -2,6 +2,7 @@
 #define DUNKOS_VMMGMT_H
 
 #include <stdbool.h>
+#include <stdatomic.h>
 #include <stdint.h>
 #include <synch.h>
 #include <util/list.h>
@@ -13,7 +14,7 @@
 
 struct frame {
     struct list aliases;
-    _Atomic bool pin;
+    atomic_bool pin;
 };
 
 void init_frame_table(void);
@@ -21,22 +22,23 @@ void init_frame_table(void);
 struct frame *allocate_frame(void);
 struct frame *evict_frame(void);
 
+
 static inline void frame_pin(struct frame *f)
 {
     barrier();
-    f->pin = true;
+    atomic_store(&f->pin, true);
 }
 
 static inline void frame_unpin(struct frame *f)
 {
     barrier();
-    f->pin = false;
+    atomic_store(&f->pin, false);
 }
 
 static inline bool frame_pinned(struct frame *f)
 {
     barrier();
-    return f->pin;
+    return atomic_load(&f->pin);
 }
 
 void *frame_to_kernaddr(struct frame *);

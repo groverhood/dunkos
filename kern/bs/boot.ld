@@ -9,19 +9,19 @@ SECTIONS
     .text : {
         *(.boot);
         *(.text);
-        _etext = .;
+        _etext = ABSOLUTE(.);
     }
 
     . = 2M;
 
     .data : {
         *(.data);
-        _edata = .;
+        _edata = ABSOLUTE(.);
     }
 
     .bss : {
         *(.bss);
-        _end = .;
+        _end = ABSOLUTE(.);
     }
 
     . = 4M;

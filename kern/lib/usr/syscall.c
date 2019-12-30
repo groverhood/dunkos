@@ -1,5 +1,6 @@
 #include <system.h>
 #include <stdint.h>
+#include <synch.h>
 
 #define SYSCALL_CLOBBER "rcx", "r11", "memory"
 #define SYSCALL_ASM __asm__ volatile
@@ -112,4 +113,29 @@ void sleep(long ms)
 void sleepts(const struct timespec *ts)
 {
     syscall1(void, SYS_SLEEPTS, ts);
+}
+
+void *growdata(size_t newsz)
+{
+    return syscall1(void *, SYS_GROWDATA, newsz);
+}
+
+sema_t sget(unsigned long value)
+{
+    return syscall1(sema_t, SYS_SGET, value);
+}
+
+void sunget(sema_t sema)
+{
+    syscall1(void, SYS_SUNGET, sema);
+}
+
+void sinc(sema_t sema)
+{
+    syscall1(void, SYS_SINC, sema);
+}
+
+void sdec(sema_t sema)
+{
+    syscall1(void, SYS_SDEC, sema);
 }

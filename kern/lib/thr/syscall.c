@@ -3,6 +3,7 @@
 #include <timer.h>
 #include <fdtable.h>
 #include <stdint.h>
+#include <util/bitmap.h>
 
 /* IA32_LSTAR msr. */
 #define SYSCALL_ADDR 0xC0000082
@@ -14,6 +15,11 @@ void *syscall_table[SYS_COUNT];
    instruction that uses the syscall number as an offset into the syscall
    table. */
 extern void syscall_handler(void);
+
+static int sget(unsigned long value);
+static void sunget(int sema);
+static void sinc(int sema);
+static void sdec(int sema);
 
 void init_syscalls(void)
 {
@@ -28,6 +34,10 @@ void init_syscalls(void)
     syscall_table[SYS_REMOVE] = &remove;
     syscall_table[SYS_WAIT] = &wait;
     syscall_table[SYS_WRITE] = &write;
+    syscall_table[SYS_SGET] = &sget; 
+    syscall_table[SYS_SUNGET] = &sunget;
+    syscall_table[SYS_SINC] = &sinc;
+    syscall_table[SYS_SDEC] = &sdec;
     syscall_table[SYS_CHMOD] = &chmod;
     syscall_table[SYS_CHMODFD] = &chmodfd;
     syscall_table[SYS_SLEEP] = &sleep;
@@ -160,4 +170,40 @@ void sleep(long ms)
 void sleepts(const struct timespec *ts)
 {
     sleep_timespec(ts);
+}
+
+static int sget(unsigned long value)
+{
+    struct process *cur = current_process();
+    lock_acquire(&cur->semtable_lock);
+    int semaid = (int)bitmap_scan_and_flip(cur->semtable_map, 0, 1, true);
+    lock_release(&cur->semtable_lock);
+
+    return semaid;
+}
+
+static void sunget(int sema)
+{
+    struct process *cur = current_process();
+    lock_acquire(&cur->semtable_lock);
+    if (bitmap_all(cur->semtable_map, sema, 1, true)) {
+        bitmap_set(cur->semtable_map, sema, 1, false);
+    }
+    lock_release(&cur->semtable_lock);
+}
+
+static void sinc(int sema)
+{
+    struct process *cur = current_process();
+    if (sema > -1 && sema < bitmap_size(cur->semtable_map)) {
+        semaphore_inc(current_process()->semtable + sema);
+    }
+}
+
+static void sdec(int sema)
+{
+    struct process *cur = current_process();
+    if (sema > -1 && sema < bitmap_size(cur->semtable_map)) {
+        semaphore_dec(current_process()->semtable + sema);
+    }
 }

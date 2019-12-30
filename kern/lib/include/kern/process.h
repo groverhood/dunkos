@@ -33,6 +33,10 @@ struct process {
 	struct page_table *spt;
 	struct fdtable *fdtable;
 
+	struct semaphore *semtable;
+	struct bitmap *semtable_map;
+	struct lock semtable_lock;
+
 	uint8_t *code_segment_begin;
 	uint8_t *code_segment_end;
 
@@ -62,6 +66,7 @@ void init_syscalls(void);
 
 void process_init(struct process *);
 
+/* Get current process. */
 struct process *current_process(void);
 
 /* Spawn a new child process. */

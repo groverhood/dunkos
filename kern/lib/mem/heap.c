@@ -13,14 +13,7 @@
 #include <thread.h>
 #include <util/debug.h>
 #include <util/list.h>
-
-struct heap_desc {
-	size_t block_size;
-	/* Size of arena in blocks. */
-	size_t arena_size;
-	struct list free_list;
-	struct lock desc_lock;
-};
+#include <heapstruct.h>
 
 /* Acquire the descriptor lock if we have multiprogramming
    enabled. */
@@ -38,23 +31,7 @@ static inline void desc_lock_release(struct heap_desc *d)
 		lock_release(&d->desc_lock);
 }
 
-/* Magic number for detecting arena corruption. */
-#define ARENA_MAGIC 0x9A548EED
-
-struct heap_arena {
-	size_t magic;
-	struct heap_desc *desc;
-	size_t free_count;
-};
-
-struct heap_block {
-	struct list_elem free_elem;
-};
-
 static struct heap_desc descriptors[16];
-
-static struct heap_arena *block_get_arena(struct heap_block *);
-static struct heap_block *arena_get_block(struct heap_arena *, size_t i);
 
 void init_heap(void)
 {
@@ -149,14 +126,4 @@ void kfree(void *p)
 	}
 
 	desc_lock_release(d);
-}
-
-static struct heap_arena *block_get_arena(struct heap_block *b)
-{
-	return page_round_down(b);
-}
-
-static struct heap_block *arena_get_block(struct heap_arena *a, size_t i)
-{
-	return (struct heap_block *)((uint8_t *)a + (sizeof *a) + i * a->desc->block_size);
 }

@@ -30,6 +30,11 @@ enum syscall_number {
     SYS_CHMODFD,
     SYS_SLEEP,
     SYS_SLEEPTS,
+    SYS_GROWDATA,
+    SYS_SGET,
+    SYS_SUNGET,
+    SYS_SINC,
+    SYS_SDEC,
 
     SYS_COUNT
 };
@@ -94,5 +99,11 @@ void sleep(long ms);
 
 /* Sleep for the specified duration. */
 void sleepts(const struct timespec *);
+
+/* Grow the data segment. Returns the pointer to the newly allocated space
+   upon success, and NULL upon failure. */
+void *growdata(size_t newsz);
+
+
 
 #endif

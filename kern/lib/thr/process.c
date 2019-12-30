@@ -12,6 +12,7 @@
 #include <string.h>
 
 #define FDCOUNT (128)
+#define SEMTABLE_SIZE (128)
 
 void process_init(struct process *pr)
 {
@@ -22,6 +23,9 @@ void process_init(struct process *pr)
     pr->exit_code = -1;
     page_table_create(&pr->spt);
     pr->fdtable = create_fdtable(pr->cwd, FDCOUNT);
+    pr->semtable = kcalloc(SEMTABLE_SIZE, sizeof *pr->semtable);
+    pr->semtable_map = bitmap_create(SEMTABLE_SIZE);
+    lock_init(&pr->semtable_lock);
 }
 
 struct process *current_process(void)
