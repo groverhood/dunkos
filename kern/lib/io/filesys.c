@@ -217,6 +217,9 @@ static void inode_disk_foreach(struct inode_disk *idisk, inode_extent_action *ex
 	}
 }
 
+static size_t free_map_allocate(size_t sectors);
+static void free_map_release(size_t where, size_t sectors);
+
 static void inode_disk_insert_extent(struct inode_disk *idisk, struct inode_extent *ext)
 {
 
@@ -228,6 +231,7 @@ static bool inode_disk_allocate_space(struct inode_disk *idisk, size_t sectors)
 	lock_acquire(&fs_free_map_lock);
 	if (sectors <= fs_free_sectors) {
 		success = true;
+		lock_release(&fs_free_map_lock);
 
 		while (sectors > 0) {
 			size_t bestattempt = sectors;
@@ -535,6 +539,26 @@ void file_set_info(struct file *f, uint64_t infomask)
 	lock_acquire(&inode->lock);
 	inode->data.info = infomask;
 	lock_release(&inode->lock);
+}
+
+uint64_t file_get_info(struct file *file)
+{
+	uint64_t info;
+	lock_acquire(&file->inode->lock);
+	info = file->inode->data.info;
+	lock_release(&file->inode->lock);
+	return info;
+}
+
+void file_set_mode(struct file *file, mode_t mode)
+{
+	uint64_t info = file_get_info(file) & ~FILEINFO_MODE_MASK;
+	file_set_info(file, info | (mode << FILEINFO_MODE_BASE));
+}
+
+mode_t file_get_mode(struct file *file)
+{
+	return (mode_t)(file->inode->data.info >> FILEINFO_MODE_BASE);
 }
 
 ssize_t file_read(struct file *f, void *dest, size_t count)

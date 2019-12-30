@@ -131,6 +131,11 @@ void page_load(void *p)
         page_read_from_disk(pg);
 }
 
+void page_defer_load(void *vaddr, struct file *file, off_t ofs, bool readonly)
+{
+
+}
+
 void page_read_from_disk(struct page *pg)
 {
 

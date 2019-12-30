@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <mode.h>
 
 /* Abstract I/O stream object. */
 struct fd;
