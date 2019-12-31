@@ -14,6 +14,7 @@
 #include <filesys.h>
 #include <system.h>
 #include <algo.h>
+#include <util/debug.h>
 
 static void idle_loop(void);
 
@@ -32,19 +33,20 @@ void kernel(void)
 	init_paging();
 	init_heap();
 	puts("Memory system initialized!\n");
-
 	
-	// puts("\nInitializing threads...");
-	// init_threads();
-	// init_syscalls();
-	// init_timer();
-	// puts("Threads initialized!");
+	puts("\nInitializing threads...");
+	init_threads();
+	init_syscalls();
+	init_timer();
+	puts("Threads initialized!");
 
-	// puts("\nInitializing filesystem...");
-	// init_ide();
-	// init_block_devices();
-	// init_filesystem();
-	// puts("Filesystem initialized!");
+	puts("\nInitializing filesystem...");
+	init_ide();
+	puts("IDE initialized!");
+	init_block_devices();
+	puts("Block devices initialized!");
+	init_filesystem();
+	puts("Filesystem initialized!");
 
 	// /* Begin the terminal shell. */
 	// if (fork() == 0) {
@@ -65,7 +67,5 @@ void kernel(void)
 
 static void idle_loop(void)
 {
-	if (threads_init) {
-		yield_current();
-	}
+	halt();
 }

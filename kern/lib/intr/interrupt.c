@@ -106,7 +106,9 @@ static enum interrupt_defer double_fault(struct interrupt *intr,
 						 struct register_state *registers)
 {
 	struct fault_interrupt_frame *frame = intrframe_;
-	halt();
+	puts("DOUBLE FAULT!!!");
+	while (true)
+		halt();
 }
 
 void isr_common_stub(interrupt_code_t intr, void *intrframe_,

@@ -32,7 +32,7 @@ kernel: kern-object lib-object
 	$(LD) -n -o $(BOOT_DIR)/iso/boot/kernel.bin -T $(BOOT_DIR)/boot.ld $(KERN_OBJECT) $(LIB_OBJECT)
 
 disk:
-	qemu-img create -f qcow2 $(BUILD_DIR)/dunkos.img $(DISK_SIZE)
+	qemu-img create -f raw $(BUILD_DIR)/dunkos.img $(DISK_SIZE)
 
 # =======================
 # === BEGIN BOOT MAKE ===

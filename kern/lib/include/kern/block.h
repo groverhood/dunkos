@@ -13,6 +13,7 @@ enum block_type {
 	BLOCK_KERNEL,
 	BLOCK_FS,
 	BLOCK_SWAP,
+	BLOCK_JOURNAL,
 
 	BLOCK_COUNT
 };

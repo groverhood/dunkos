@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <interrupt.h>
 #include <algo.h>
+#include <util/debug.h>
 
 static struct lock ide_lock;
 static interrupt_handler dma_handler;
@@ -33,7 +34,6 @@ static void wait_until_ready(void)
 
 void ide_read_sectors(uint32_t start, int sectors, void *dest)
 {
-	barrier();
 	size_t sectors_to_read = (sectors & 0xFF);
 	wait_until_ready();
 	lock_acquire(&ide_lock);
@@ -45,13 +45,12 @@ void ide_read_sectors(uint32_t start, int sectors, void *dest)
 	expecting_interrupt = true;
 	outb(IDE_READ, 0x1F7);
 	semaphore_dec(&dma_sema);
-	insb(0x1F0, dest, sectors_to_read * BLOCK_SECTOR_SIZE);
+	insb(0x1F0, kernel_to_phys(dest), sectors_to_read * BLOCK_SECTOR_SIZE);
 	lock_release(&ide_lock);
 }
 
 void ide_write_sectors(uint32_t start, int sectors, void *src)
 {
-	barrier();
 	size_t sectors_to_write = (sectors & 0xFF);
 	wait_until_ready();
 	lock_acquire(&ide_lock);

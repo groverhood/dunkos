@@ -178,6 +178,9 @@ static char *read_format(const char *format, struct format_arg_info *pfarg)
 		case 'c': {
 			pfarg->data = FMTDATA_CHR;
 		} break;
+		case 's': {
+			pfarg->data = FMTDATA_STR;
+		} break;
 		case '%': {
 			pfarg->data = FMTDATA_ESC;
 		} break;

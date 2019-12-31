@@ -2,6 +2,8 @@
 #include <ide.h>
 #include <synch.h>
 #include <string.h>
+#include <heap.h>
+#include <util/debug.h>
 
 struct block {
 	const char *name;	
@@ -13,6 +15,18 @@ struct block {
 
 struct block block_devices[BLOCK_COUNT];
 
+#define DUNKOS_IMGHDR __attribute__((packed, aligned (BLOCK_SECTOR_SIZE)))
+#define DUNKOS_MAGIK (*(uint64_t *)"DunkOS!")
+
+struct DUNKOS_IMGHDR dunkos_image_header {
+    uint64_t image_size;
+    uint64_t fs_block_start;
+    uint64_t fs_block_size;
+    uint64_t swap_block_start;
+    uint64_t swap_block_size;
+    uint64_t magic;
+};
+
 void init_block_devices(void)
 {
 	size_t i;
@@ -21,8 +35,18 @@ void init_block_devices(void)
 		lock_init(&b->lock);
 		memset(b->remainder, 0, BLOCK_SECTOR_SIZE);
 	}
+	
+	struct dunkos_image_header *hdr = kcalloc(1, sizeof *hdr);
+	ide_read_sectors(0, 1, hdr);
 
+	assert(hdr->magic == DUNKOS_MAGIK);
 
+	block_devices[BLOCK_FS].start = hdr->fs_block_start;
+	block_devices[BLOCK_FS].size = hdr->fs_block_size;
+	block_devices[BLOCK_SWAP].start = hdr->swap_block_start;
+	block_devices[BLOCK_SWAP].size = hdr->swap_block_size;
+
+	kfree(hdr);
 }
 
 struct block *get_block(enum block_type role)

@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <algo.h>
 #include <asm.h>
+#include <util/debug.h>
 
 static struct list ready_threads;
 static struct thread *running_thread;

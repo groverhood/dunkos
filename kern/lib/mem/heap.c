@@ -80,13 +80,11 @@ void *kmalloc(size_t size)
 					list_push_back(&d->free_list, &b->free_elem);
 				}
 			}
-
-			assert(a->magic == ARENA_MAGIC);
 			b = elem_value(list_pop_front(&d->free_list), struct heap_block, free_elem);
 			memset(b, 0, d->block_size);
 			a = block_get_arena(b);
+			assert(a->magic == ARENA_MAGIC);
 			a->free_count--;
-
 			desc_lock_release(d);
 		}
 	}
