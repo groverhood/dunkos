@@ -3,6 +3,9 @@
 #include <interrupt.h>
 #include <thread.h>
 #include <algo.h>
+#include <asm.h>
+#include <string.h>
+#include <util/debug.h>
 
 extern void _init_tss(void);
 extern void _ltr(void);
@@ -31,12 +34,8 @@ void init_interrupts(void)
 	_init_idt();
 	_lidt();
 
-	puts("Initialized Task State Segment...");
-
 	_init_tss();
 	_ltr();
-
-	puts("Initialized Interrupt Descriptor Table...");
 
 	_install_stubs();
 
@@ -57,7 +56,7 @@ void init_interrupts(void)
 	install_interrupt_handler(INTR_TYPE_DBLFAULT, &double_fault);
 	install_interrupt_handler(INTR_TYPE_GPFAULT, &gp_fault);
 
-	intr_level = INTR_ENABLED;
+	intr_level = INTR_DISABLED;
 }
 
 enum interrupt_level disable_interrupts(void)
@@ -70,8 +69,9 @@ enum interrupt_level get_interrupt_level(void)
 	return intr_level;
 }
 
-__attribute__((optimize (0))) enum interrupt_level set_interrupt_level(enum interrupt_level level)
+enum interrupt_level set_interrupt_level(enum interrupt_level level)
 {
+	barrier();
 	enum interrupt_level old_level = intr_level;
 	switch (level) {
 	case INTR_DISABLED: __asm__ volatile ("cli"); break;
@@ -105,20 +105,27 @@ static enum interrupt_defer double_fault(struct interrupt *intr,
 						 void *intrframe_,
 						 struct register_state *registers)
 {
-	struct fault_interrupt_frame *frame = intrframe_;
-	puts("DOUBLE FAULT!!!");
-	while (true)
+	struct benign_interrupt_frame *frame = intrframe_;
+	printf("DOUBLE FAULT!! %p", frame->rip);
+	while (true) {
 		halt();
+	}
 }
 
 void isr_common_stub(interrupt_code_t intr, void *intrframe_,
 					 struct register_state *registers)
 {
+	extern void _signal_eoi(void);
+
 	enum interrupt_level old_level;
 	enum interrupt_defer action;
 	old_level = set_interrupt_level(INTR_CONTEXT);
 	action = intr_table[intr].handler(intr_table + intr, intrframe_, registers);
+	switch (action) {
+		case INTRDEFR_YIELD: yield_current();
+	}
 	set_interrupt_level(old_level);
+	_signal_eoi();
 }
 
 void install_interrupt_handler(enum interrupt_type which, interrupt_handler *handler)

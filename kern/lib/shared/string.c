@@ -64,5 +64,13 @@ void *memset(void *dest, register int val, register size_t len)
 
 int strncmp(const char *left, const char *right, size_t count)
 {
+	int cmp = 0;
+	while (cmp == 0 && *left && *right && count > 0) {
+		cmp = (*left - *right);
+		left++;
+		right++;
+		count--;
+	}
 
+	return (cmp != 0) ? (cmp) : (int)(count);
 }

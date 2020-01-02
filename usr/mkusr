@@ -1,3 +1,4 @@
+#!/usr/bin/julia
 # MKUSR OPTS
 # -c :: create an image file.
 # -d :: source is a directory, otherwise an attempt to read a C source will be made.
@@ -27,9 +28,6 @@ function main(args)
         "-o", "--out"
             help = "output disk image"
             default = "dunkos.img"
-        "input"
-            help = "input file/directory"
-            required = true
     end
     parseresult = parse_args(args, settings, as_symbols=true);
 
@@ -40,13 +38,8 @@ function main(args)
     end
 
     fmtdunkimg(diskname);
-    input = parseresult[:input];
 
-    if isdir(input)
 
-    else
-
-    end
 end
 
 main(ARGS);

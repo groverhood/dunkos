@@ -34,46 +34,14 @@ static void wait_until_ready(void)
 
 void ide_read_sectors(uint32_t start, int sectors, void *dest)
 {
-	size_t sectors_to_read = (sectors & 0xFF);
-	wait_until_ready();
-	lock_acquire(&ide_lock);
-	outb((uint8_t)sectors_to_read, 0x1F2);
-	outb(getbyte(start, 0), 0x1F3);
-	outb(getbyte(start, 1), 0x1F4);
-	outb(getbyte(start, 2), 0x1F5);
-	outb(getbyte(start, 3), 0x1F6);
-	expecting_interrupt = true;
-	outb(IDE_READ, 0x1F7);
-	semaphore_dec(&dma_sema);
-	insb(0x1F0, kernel_to_phys(dest), sectors_to_read * BLOCK_SECTOR_SIZE);
-	lock_release(&ide_lock);
 }
 
 void ide_write_sectors(uint32_t start, int sectors, void *src)
 {
-	size_t sectors_to_write = (sectors & 0xFF);
-	wait_until_ready();
-	lock_acquire(&ide_lock);
-	outb((uint8_t)sectors_to_write, 0x1F2);
-	outb(getbyte(start, 0), 0x1F3);
-	outb(getbyte(start, 1), 0x1F4);
-	outb(getbyte(start, 2), 0x1F5);
-	outb(getbyte(start, 3), 0x1F6);
-	expecting_interrupt = true;
-	outb(IDE_READ, 0x1F7);
-	outsb(src, 0x1F0, sectors_to_write * BLOCK_SECTOR_SIZE);
-	semaphore_dec(&dma_sema);
-	lock_release(&ide_lock);
 }
 
 static enum interrupt_defer dma_handler(struct interrupt *intr, void *intrframe_, struct register_state *regs)
 {
-	barrier();
-	if (expecting_interrupt) {
-		inb(0x1F7);
-		expecting_interrupt = false;
-		semaphore_inc(&dma_sema);
-	} else puts("Unexpected DMA interrupt.");
 
 	return INTRDEFR_NONE;
 }

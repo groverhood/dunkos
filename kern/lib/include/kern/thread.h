@@ -27,6 +27,8 @@ enum thread_status {
 typedef void thread_function(void *);
 
 struct thread_context {
+	struct register_state registers;
+	size_t rflags;
 	size_t *sp;
 	void *ip;
 	thread_function *entry;

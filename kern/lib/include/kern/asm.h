@@ -12,26 +12,15 @@
 
 #define unreachable __builtin_unreachable
 
-static inline void outb(uint8_t value, uint16_t port)
-{
-    barrier();
-    __asm__ volatile (
-        "outb %%al, %%dx"
-        :: [value] "a" (value), [port] "d" (port)
-    );
-}
+#define out(value, port) do {\
+        barrier();\
+        __asm__ __volatile__ ("out %0, %%dx" :: "a" (value), "d" (port));\
+    } while (0)
 
-static inline uint8_t inb(uint16_t port)
-{
-    barrier();
-    uint8_t value;
-    __asm__ (
-        "inb %%dx, %%al"
-        : "=a" (value)
-        : "d" (port)
-    );
-    return value;
-}
+#define in(port, pvalue) do {\
+        barrier();\
+        __asm__ __volatile__ ("in %%dx, %0" : "=m" (*pvalue) : "d" (port));\
+    } while (0)
 
 __attribute__((noreturn)) static inline void jump(uint64_t where)
 {
@@ -61,5 +50,7 @@ static inline void outsb(void *addr, uint16_t port, size_t count)
         : "memory"
     );
 }
+
+#define PACKED __attribute__((packed))
 
 #endif

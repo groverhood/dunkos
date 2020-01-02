@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <algo.h>
+#include <util/debug.h>
 
 #define TIME_SLICE 100
 
@@ -58,6 +59,8 @@ static enum interrupt_defer timer_interrupt(struct interrupt *intr,
 							void *intrframe_, 
 							struct register_state *registers)
 {
+	puts("TIME'S UP!!!");
+	halt();
 	enum interrupt_level old_level = disable_interrupts();
 	enum interrupt_defer action = INTRDEFR_NONE;
 	struct benign_interrupt_frame *frame = intrframe_;
@@ -66,11 +69,7 @@ static enum interrupt_defer timer_interrupt(struct interrupt *intr,
 	if (++thread_ticks > TIME_SLICE) {
 		action = INTRDEFR_YIELD;
 		thread_ticks = 0;
-		struct thread_context *cc = &get_current_thread()->context;
-		cc->ip = (void *)frame->rip;
-		cc->sp = (size_t *)frame->rsp;
 	}
-
 	
 	struct list_elem *sleeper_el;
 	for (sleeper_el = list_begin(&sleep_queue); 
@@ -81,7 +80,7 @@ static enum interrupt_defer timer_interrupt(struct interrupt *intr,
 									struct thread, sleep_elem);
 
 		if (sleeper->sleep_end <= ticks)
-			semaphore_dec(&sleeper->sleep_sema);
+			semaphore_inc(&sleeper->sleep_sema);
 	}
 
 	return action;

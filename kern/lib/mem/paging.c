@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
+#include <algo.h>
 #include <synch.h>
 
 
@@ -27,6 +28,7 @@ static enum interrupt_defer page_fault(struct interrupt *intr,
 {
 	struct fault_interrupt_frame *intrframe = intrframe_;
 	unsigned long error = intrframe->error;
+	printf("Page fault at %p\n", intrframe->rip);
 
 	void *faultaddr;
 	__asm__ ("movq %%cr2, %0" : "=r" (faultaddr));

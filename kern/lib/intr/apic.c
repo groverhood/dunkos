@@ -9,6 +9,7 @@
 #include <memory.h>
 #include <pml4.h>
 
+
 #define APIC_BASE ((void *)0xFEE00000)
 #define APIC_ENABLE (1 << 11)
 #define APIC_BSP_PROCESSOR (1 << 8)
@@ -42,6 +43,7 @@ void _enable_apic_timer(int64_t quantum)
 	set_apic(APIC_DVCFG_OFS, 0x0B);
 
 	puts("Enabled APIC timer...");
+	//set_interrupt_level(INTR_ENABLED);
 }
 
 bool _enable_apic(void)
@@ -59,11 +61,26 @@ bool _enable_apic(void)
 	enabled_apic = !!(cpuid_retval & (1 << 9));
 
 	if (enabled_apic) {
+		uint64_t oldbase = rdmsr(0x01B);
 		apic_base = page_allocate(0);
-		memcpy(apic_base, phys_to_kernel(APIC_BASE), 0x1000);
-		wrmsr(0x01B, (uintptr_t)kernel_to_phys(apic_base) | APIC_ENABLE | APIC_BSP_PROCESSOR);
+		memcpy(apic_base, phys_to_kernel((void *)oldbase), 0x1000);
+		uintptr_t newbase = (uintptr_t)kernel_to_phys(apic_base) 
+							| (oldbase & 0xFFF);
+
+		wrmsr(0x01B, newbase);
+		apic_base[APIC_SPINT_OFS] &= ~0xFF;
+		apic_base[APIC_SPINT_OFS] |= 0x100 | INTR_TYPE_SPURIOUS;
+		apic_base[APIC_TIMER_OFS] &= ~0xFF;
+		apic_base[APIC_TIMER_OFS] |= INTR_TYPE_TIMER;
+
+		out((uint8_t)0xFF, 0x21);
+		out((uint8_t)0xFF, 0xA1);
 	}
 	
-	printf("APIC base: %p\n", rdmsr(APIC_BASE) & ~0xFFF);
 	return enabled_apic;
+}
+
+void _signal_eoi(void)
+{
+	apic_base[0xB0] = 0;
 }
