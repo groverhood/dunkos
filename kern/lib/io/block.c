@@ -1,9 +1,9 @@
 #include <block.h>
-#include <ide.h>
 #include <synch.h>
 #include <string.h>
 #include <heap.h>
 #include <util/debug.h>
+#include <stdint.h>
 
 struct block {
 	const char *name;	

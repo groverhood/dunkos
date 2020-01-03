@@ -1,0 +1,3 @@
+1. Finish the high-level AHCI API.
+2. Refactor filesystem code to better reflect said API.
+3. Flesh out "mkusr" script to compile user programs under "usr".

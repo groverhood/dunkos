@@ -85,5 +85,15 @@ lib-object: $(LIB_CSOURCES:%.c=%.o) $(LIB_SSOURCES:%.s=%.o)
 clean:
 	rm -vf $(BUILD_DIR)/*.o
 
-run: all
-	qemu-system-x86_64 -hda $(BUILD_DIR)/dunkos.img -cdrom $(BUILD_DIR)/kernel.iso --curses -m 512
+run-simple:
+	qemu-system-x86_64\
+		-boot d\
+		-drive id=disk,file=$(BUILD_DIR)/dunkos.img,if=none\
+		-cdrom $(BUILD_DIR)/kernel.iso\
+		-device ioh3420,id=root_port1,chassis=0,slot=0,bus=pcie.0\
+        -device ahci,bus=root_port1,id=ahci\
+		--curses\
+		-M q35
+
+run: all run-simple
+	

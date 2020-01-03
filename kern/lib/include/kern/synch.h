@@ -2,6 +2,7 @@
 #define DUNKOS_SYNCH_H
 
 #include <util/list.h>
+#include <stdatomic.h>
 
 /**
  * 	Use these synchronization primitives instead of the provided thread

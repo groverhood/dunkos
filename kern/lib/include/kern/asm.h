@@ -19,7 +19,7 @@
 
 #define in(port, pvalue) do {\
         barrier();\
-        __asm__ __volatile__ ("in %%dx, %0" : "=m" (*pvalue) : "d" (port));\
+        __asm__ __volatile__ ("in %%dx, %0" : "=a" (*pvalue) : "d" (port));\
     } while (0)
 
 __attribute__((noreturn)) static inline void jump(uint64_t where)

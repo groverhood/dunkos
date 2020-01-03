@@ -1,6 +1,12 @@
 #ifndef DUNKOS_PCI_H
 #define DUNKOS_PCI_H
 
+#include <util/list.h>
+
+#define PCI_MAX_DEVICES 32
+#define PCI_MAX_BUSES 256
+#define PCI_MAX_FUNCTIONS 8
+
 enum pci_device_class {
     PCI_DCLASS_UNCLASSIFIED,
     PCI_DCLASS_MASS,
@@ -27,6 +33,7 @@ enum pci_device_class {
 };
 
 struct pci_device {
+    struct list_elem group_elem;
     enum pci_device_class class;
     int subclass; /* Each different I/O module will have its own interpretation
                      of this integer. */
@@ -34,11 +41,13 @@ struct pci_device {
                      of this integer. */
 
     int id;
-    int bus;
+    int buses[PCI_MAX_FUNCTIONS];
     void *config;
+    struct pci_device *bridge;
+    const char *devstr;
 };
 
 void init_pci(void);
-struct pci_device *get_device(enum pci_device_class class);
+struct pci_device *get_pci_device(enum pci_device_class class, int subclass);
 
 #endif

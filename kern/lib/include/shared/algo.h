@@ -31,7 +31,7 @@
 
 #define halt() __asm__ volatile ("hlt")
 
-#define getbyte(i, n) ((i) >> ((((n) * 8)) & 0xFF))
+#define getbyte(i, n) (((i) >> (((n) * 8))) & 0xFF)
 
 inline static size_t hash_uint64(uint64_t h)
 {

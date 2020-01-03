@@ -71,7 +71,7 @@ bool _enable_apic(void)
 		apic_base[APIC_SPINT_OFS] &= ~0xFF;
 		apic_base[APIC_SPINT_OFS] |= 0x100 | INTR_TYPE_SPURIOUS;
 		apic_base[APIC_TIMER_OFS] &= ~0xFF;
-		apic_base[APIC_TIMER_OFS] |= INTR_TYPE_TIMER;
+		apic_base[APIC_TIMER_OFS] |= 0x100 | INTR_TYPE_TIMER;
 
 		out((uint8_t)0xFF, 0x21);
 		out((uint8_t)0xFF, 0xA1);

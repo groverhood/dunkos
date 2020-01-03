@@ -14,6 +14,8 @@
 #include <filesys.h>
 #include <system.h>
 #include <algo.h>
+#include <pci.h>
+#include <ahci.h>
 #include <util/debug.h>
 
 static void idle_loop(void);
@@ -23,7 +25,7 @@ void kernel(void)
 {
 	init_console();
 
-	puts("Initializted console... printing \"Hello, world!\"...");
+	puts("Initialized console... printing \"Hello, world!\"...");
 	puts("Hello, world!");
 
 	init_interrupts();
@@ -40,9 +42,10 @@ void kernel(void)
 	init_syscalls();
 	puts("Threads initialized!");
 
-	// puts("\nInitializing filesystem...");
-	// init_ide();
-	// puts("IDE initialized!");
+	puts("\nInitializing filesystem...");
+	init_pci();
+	init_ahci();
+	puts("PCI initialized!");
 	// init_block_devices();
 	// puts("Block devices initialized!");
 	// init_filesystem();

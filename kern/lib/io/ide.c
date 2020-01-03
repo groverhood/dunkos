@@ -24,9 +24,6 @@ void init_ide(void)
 
 static void wait_until_ready(void) 
 {
-  	while ((inb(0x1F7) & 0xC0) != 0x40) {
-  		continue;
-	}
 } 
 
 #define IDE_READ 0x20
