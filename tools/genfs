@@ -1,0 +1,75 @@
+#!/usr/bin/perl
+
+# Generate a directory that can be specified as the root argument for 'mkusr'
+#
+# Certain structures will always be present upon generating a root, such as
+# the files under /fs/*.
+
+use strict;
+use warnings;
+use feature "say";
+
+use constant BLOCK_SIZE => 512;
+
+use Getopt::Long;
+use File::Basename;
+use File::Copy::Recursive "rcopy";
+use File::Spec "splitdir";
+use Data::Dumper;
+
+my $usagemsg = <<"__end__";
+Usage: genfs [options] [input [...]]
+    -o/--out path\twhere to copy the files/directories into
+    input path\tthe files/directories to copy
+__end__
+
+sub usage
+{
+    say $usagemsg;
+    exit;
+}
+
+GetOptions(
+    "out=s" => \(my $output_path = ".")
+) or usage();
+
+sub gendir
+{
+    my $dir = $_[0];
+    mkdir "$output_path$dir";
+}
+
+sub genfile
+{
+    my $file = $_[0];
+    open my $fh, ">", "$output_path$file";
+    print $fh "\x00"x(BLOCK_SIZE);
+    close $fh;
+}
+
+sub gendefaults
+{
+    gendir("/fs");
+
+    genfile("/fs/map");
+    genfile("/fs/stdin");
+    genfile("/fs/stdout");
+    genfile("/fs/stderr");
+}
+
+# gendefaults;
+
+while (my $input = shift) {
+    $input =~ m`^/.*$` or die "Invalid path format: $input";
+
+    my @segments = grep length, (split m`/`, $input);
+    my $last = pop @segments;
+
+    my $path = $output_path;
+    foreach my $seg (@segments) {
+        $path = "$path/$seg";
+        mkdir $path;
+    }
+
+    rcopy $last, "$output_path$input";
+}

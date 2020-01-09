@@ -1,0 +1,188 @@
+#!/usr/bin/perl
+
+# Generate the storage device from a root directory and optionally a Makefile.
+
+use strict;
+use warnings;
+use feature "say";
+
+use Getopt::Long;
+use File::Basename;
+
+use constant DUNKOS_MAGIK => "DunkOS!";
+use constant BLOCK_SIZE => 512;
+use constant ROOT_SECTOR => 1;
+use constant DIRENT_SIZE => 40;
+
+# Handle to the disk image.
+my $dsk;
+
+# Link a file as a directory entry.
+sub diradd
+{
+    my $name = $_[0];
+    my $sector = $_[1];
+
+    my $dirent = pack "a32xLx![L]", $name, $sector;
+    print $dsk $dirent;
+}
+
+# Emulate the provided directory structure on the currently opened DunkOS disk
+# image.
+sub ddir
+{
+    use integer;
+
+    my $root = $_[0];
+    my $repr = (defined $_[1]) ? $_[1] : "/";
+    my $parent = (defined $_[2]) ? $_[2] : ROOT_SECTOR;
+
+    opendir(my $cdir, $root);
+
+    my $sector = (tell $dsk) / BLOCK_SIZE;
+    my $dir_entries = () = readdir $cdir;
+    seekdir($cdir, 0), 0;
+
+    my $cur = tell $dsk;
+    my $sz = DIRENT_SIZE * $dir_entries;
+    my $dirblcks = ($sz + BLOCK_SIZE - 1) / BLOCK_SIZE;
+
+    diradd(".", $sector);
+    diradd("..", $parent);
+
+    my $prev = tell $dsk;
+
+    seek $dsk, ($cur + $dirblcks * BLOCK_SIZE), 0;
+
+    while (my $dirent = readdir $cdir) {
+        my $entpath = "$root/$dirent";
+        my $chldsctr;
+
+        if (-d $entpath) {
+            $chldsctr = ddir($entpath, "$repr/$dirent", $sector);
+        } else {
+            open my $file, "<", $entpath;
+
+            # We opt not to use the blocks field returned by stat, as some
+            # files may have holes. We don't support this feature.
+            (undef, undef, my $mode, undef, undef, undef, undef
+             my $size, undef undef, undef, undef, undef) = stat $file;
+
+            # Size in blocks, including the inode header.
+            my $blocks = ($size + BLOCK_SIZE - 1) / BLOCK_SIZE + 1;
+
+            my $cur = tell $dsk;
+
+            # Write inode.
+            my $inode = pack 
+                "QLx![Q]Lx![Q]Lx![Q]Lx![Q]Lx![Q]Lx![Q]Lx![Q]Lx![Q]Lx![Q]Lx![Q]", 
+                ($mode & 0777) << 8, $size, $parent, 
+                1, 0xFFFF_FFFF, 0xFFFF_FFFF, 
+                0xFFFF_FFFF, 0xFFFF_FFFF, 0xFFFF_FFFF,
+                ($cur / BLOCK_SIZE), $blocks;
+            print $dsk $inode;
+            seek $dsk, ($cur + BLOCK_SIZE), 0;
+
+            # Write data.
+            my $data = <$file>;
+            print $dsk $data;
+            seek $dsk, ($cur + $blocks * BLOCK_SIZE), 0;
+
+            close $file;
+
+            $chldsctr = ($cur / BLOCK_SIZE);
+        }
+
+        my $tmp = tell $dsk;
+        seek $dsk, $prev, 0;
+        diradd($dirent, $chldsctr);
+        seek $dsk, $tmp, 0;
+    }
+
+    closedir $cdir;
+    return $sector;
+}
+
+my $usagemsg = <<"__end__";
+Usage: mkusr [options]
+    -r/--root path\t\tspecify directory to copy as root
+    -m/--make path\t\tpath of makefile to run before copying root
+    -o/--out file/path\t\toutput disk image (./dunkos.img, if no argument)
+    -s/--size int (K|M|G)\tsize of the outputted disk image (64M, if no argument)
+    -h/--help\t\t\tdisplay this message 
+__end__
+
+sub usage
+{
+    say $usagemsg;
+    exit;
+}
+
+# Retrieve and validate arguments
+GetOptions(
+    "root=s" => \my $root,
+    "make=s" => \my $makedir,
+    "out=s" => \(my $output_path = "./dunkos.img"),
+    "size=s" => \(my $size = '64M'),
+    "help" => \my $help
+) or usage();
+
+usage() if defined $help;
+
+if (defined $root) {
+    die "Option --root/-r is not a directory: $root" unless -d $root;
+}
+
+if (defined $makedir) {
+    die "Option --make/-m is not a directory: $makedir" unless -d $makedir;
+    die "Option --make/-m does not contain a Makefile: $makedir"
+        unless -f "$makedir/Makefile";
+    system "make -C $makedir";
+}
+
+(my $output_file, my $output_dir, undef) = fileparse $output_path;
+my $output = ($output_file eq "") ? "$output_dir/dunkos.img" : $output_path;
+
+die "Invalid format for argument --size/-s: $size"
+    unless $size =~ m`^(?<num>[0-9]+)(?<unit>K|M|G)$!`;
+
+my $num = int $+{num};
+my $unit = $+{unit};
+
+my %unit_mappings = (
+    "K" => 0x0000_0400,
+    "M" => 0x0010_0000,
+    "G" => 0x4000_0000
+);
+
+# The total size of the disk.
+my $disksize = $num * $unit_mappings{$unit};
+my $dskblocks = $disksize / BLOCK_SIZE;
+
+system "dd if=/dev/zero count=$dskblocks of=$output conv=fsync";
+
+open $dsk, ">", $output
+    or die "Could not open $output for writing";
+
+# How the header is represented in C.
+# struct dunkos_image_header {
+#     uint64_t image_size;
+#     uint64_t fs_block_start;
+#     uint64_t fs_block_size;
+#     uint64_t swap_block_start;
+#     uint64_t swap_block_size;
+#     uint64_t magic;
+# };
+
+my $swapblocks = $dskblocks / 4;
+my $fsblocks = $dskblocks - $swapblocks - 1;
+
+my $header = pack "Q Q Q Q Q a8", 
+    $dskblocks, 1, $fsblocks + 1, $fsblocks + 1, $fsblocks + $swapblocks + 1, DUNKOS_MAGIK;
+
+print $dsk $header, "\x00"x(~(~BLOCK_SIZE + 1) & (tell $dsk));
+
+# Create the initial DunkOS directory structure.
+ddir($root) unless not defined $root;
+
+close $dsk;
