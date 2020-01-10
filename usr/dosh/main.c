@@ -10,10 +10,15 @@ static char **parseargs(char *cmd)
     
 }
 
+static void freeargs(char **argv)
+{
+
+}
+
 int main(int argc, char *argv[])
 {
     static char rdbuf[RDBFSZ + 1];
-    while (scanf("%" stringify(RDBFSZ) "s\n", rdbuf) == 1) {
+    while (printf("%% ") != 0 && scanf("%" stringify(RDBFSZ) "s\n", rdbuf) != 0) {
         char **subargv = parseargs(rdbuf);
         pid_t pr = fork();
         if (pr == 0) {
@@ -21,6 +26,7 @@ int main(int argc, char *argv[])
             exit(-1);
         } else {
             wait(pr);
+            freeargs(subargv);
         }
     }
 }
