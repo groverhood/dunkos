@@ -18,9 +18,10 @@ use File::Spec "splitdir";
 use Data::Dumper;
 
 my $usagemsg = <<"__end__";
-Usage: genfs [options] [input [...]]
+Usage: genfs [options] [in=out [...]]
     -o/--out path\twhere to copy the files/directories into
-    input path\tthe files/directories to copy
+    -h/--help \t\tdisplay this message
+    in=out glob=path\tthe files/directories to copy
 __end__
 
 sub usage
@@ -29,9 +30,12 @@ sub usage
     exit;
 }
 
-GetOptions(
-    "out=s" => \(my $output_path = ".")
-) or usage();
+usage() unless GetOptions(
+    "out=s" => \(my $output_path = "."),
+    "help" => \my $help
+);
+
+usage() if defined $help;
 
 sub gendir
 {
