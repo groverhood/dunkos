@@ -61,6 +61,8 @@ sub gendefaults
     genfile("/fs/stderr");
 }
 
+mkdir $output_path;
+
 gendefaults;
 
 while (my $input = shift) {
