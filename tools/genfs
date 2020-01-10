@@ -57,19 +57,21 @@ sub gendefaults
     genfile("/fs/stderr");
 }
 
-# gendefaults;
+gendefaults;
 
 while (my $input = shift) {
-    $input =~ m`^/.*$` or die "Invalid path format: $input";
+    $input =~ m`^(?<fst>.*)=(?<snd>/.*)$` or die "Invalid arg format: $input";
 
-    my @segments = grep length, (split m`/`, $input);
-    my $last = pop @segments;
+    my $fst = $+{fst};
+    my $snd = $+{snd};
+
+    my @segments = grep length, (split m`/`, $snd);
 
     my $path = $output_path;
     foreach my $seg (@segments) {
         $path = "$path/$seg";
-        mkdir $path;
+        mkdir $path unless -d $path;
     }
 
-    rcopy $last, "$output_path$input";
+    rcopy $fst, "$output_path$snd";
 }

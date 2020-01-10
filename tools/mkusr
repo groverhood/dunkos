@@ -55,6 +55,8 @@ sub ddir
     seek $dsk, ($cur + $dirblcks * BLOCK_SIZE), 0;
 
     while (my $dirent = readdir $cdir) {
+        next if $dirent eq "." or $dirent eq "..";
+
         my $entpath = "$root/$dirent";
         my $chldsctr;
 
@@ -65,28 +67,37 @@ sub ddir
 
             # We opt not to use the blocks field returned by stat, as some
             # files may have holes. We don't support this feature.
-            (undef, undef, my $mode, undef, undef, undef, undef
-             my $size, undef undef, undef, undef, undef) = stat $file;
+            my @stat = stat $file;
+            my $mode = $stat[2];
+            my $size = $stat[7];
 
+            if ($size > 0) {
+
+            }
             # Size in blocks, including the inode header.
             my $blocks = ($size + BLOCK_SIZE - 1) / BLOCK_SIZE + 1;
 
             my $cur = tell $dsk;
+            my @fst_extent = ($size > 0) ? 
+                (($cur / BLOCK_SIZE), $blocks - 1) : (0, 0);
 
             # Write inode.
             my $inode = pack 
                 "QLx![Q]Lx![Q]Lx![Q]Lx![Q]Lx![Q]Lx![Q]Lx![Q]Lx![Q]Lx![Q]Lx![Q]", 
                 ($mode & 0777) << 8, $size, $parent, 
-                1, 0xFFFF_FFFF, 0xFFFF_FFFF, 
+                ($size > 0) ? 1 : 0, 0xFFFF_FFFF, 0xFFFF_FFFF, 
                 0xFFFF_FFFF, 0xFFFF_FFFF, 0xFFFF_FFFF,
-                ($cur / BLOCK_SIZE), $blocks;
+                @fst_extent;
+
             print $dsk $inode;
             seek $dsk, ($cur + BLOCK_SIZE), 0;
 
-            # Write data.
-            my $data = <$file>;
-            print $dsk $data;
-            seek $dsk, ($cur + $blocks * BLOCK_SIZE), 0;
+            if ($size > 0) {
+                # Write data.
+                my $data = <$file>;
+                print $dsk $data;
+                seek $dsk, ($cur + $blocks * BLOCK_SIZE), 0;
+            }
 
             close $file;
 
@@ -159,7 +170,7 @@ my %unit_mappings = (
 my $disksize = $num * $unit_mappings{$unit};
 my $dskblocks = $disksize / BLOCK_SIZE;
 
-system "dd if=/dev/zero count=$dskblocks of=$output conv=fsync";
+system "fallocate -l $size $output";
 
 open $dsk, ">", $output
     or die "Could not open $output for writing";
@@ -177,10 +188,10 @@ open $dsk, ">", $output
 my $swapblocks = $dskblocks / 4;
 my $fsblocks = $dskblocks - $swapblocks - 1;
 
-my $header = pack "Q Q Q Q Q a8", 
+my $header = pack "Q Q Q Q Q a8 x![512]", 
     $dskblocks, 1, $fsblocks + 1, $fsblocks + 1, $fsblocks + $swapblocks + 1, DUNKOS_MAGIK;
 
-print $dsk $header, "\x00"x(~(~BLOCK_SIZE + 1) & (tell $dsk));
+print $dsk $header;
 
 # Create the initial DunkOS directory structure.
 ddir($root) unless not defined $root;
