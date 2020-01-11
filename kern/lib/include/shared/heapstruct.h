@@ -2,6 +2,9 @@
 #define DUNKOS_HEAPSTRUCT_H
 
 #include <synch.h>
+#include <stdint.h>
+#include <memunit.h>
+#include <util/list.h>
 
 #ifndef HEAPBLOCKSZ
 #define HEAPBLOCKSZ PAGESIZE

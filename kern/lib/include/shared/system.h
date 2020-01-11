@@ -7,7 +7,7 @@
 #include <mode.h>
 
 #ifdef __DUNKOS_USR
-typedef int pid_t;
+#include <sys/types.h>
 #else
 #include <process.h>
 #endif

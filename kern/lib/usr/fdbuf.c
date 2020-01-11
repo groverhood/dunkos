@@ -4,7 +4,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <system.h>
-#include <stdatomic.h>
+#include <synch.h>
+#include <sys/types.h>
 
 #define CACHSZ (0x100)
 

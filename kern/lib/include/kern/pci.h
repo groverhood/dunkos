@@ -50,4 +50,7 @@ struct pci_device {
 void init_pci(void);
 struct pci_device *get_pci_device(enum pci_device_class class, int subclass);
 
+void *pci_get_bar(struct pci_device *dev, int n);
+void pci_set_bar(struct pci_device *dev, int n);
+
 #endif
