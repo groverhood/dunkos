@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <msr.h>
+#include <cpuid.h>
 
 #define atomic _Atomic
 #define _Unused __attribute__((unused))
@@ -50,6 +51,8 @@ static inline void outsb(void *addr, uint16_t port, size_t count)
         : "memory"
     );
 }
+
+#define cpuid __cpuid
 
 #define PACKED __attribute__((packed))
 

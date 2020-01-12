@@ -216,7 +216,6 @@ static void idle_thread_func(void *aux)
 {
     puts("Idling...");
     while (true) {
-        halt();
     }
 }
 

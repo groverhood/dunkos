@@ -9,6 +9,7 @@
 #include <algo.h>
 #include <util/debug.h>
 
+#define QUANTUM 100000
 #define TIME_SLICE 100
 
 static uint64_t ticks;
@@ -31,7 +32,7 @@ void init_timer(void)
 	if (_enable_apic()) {
 		install_interrupt_handler(INTR_TYPE_TIMER, &timer_interrupt);
 		puts("Enabled APIC...");
-		_enable_apic_timer(TIME_SLICE);
+		_enable_apic_timer(QUANTUM);
 	}
 }
 
@@ -51,7 +52,7 @@ void sleep_timespec(const struct timespec *duration)
 	int64_t nanos;
 	if (safemul(duration->seconds, NANO_PER_SEC, &nanos)
 		&& safeadd(nanos, duration->nanoseconds, &nanos)) {
-		sleep_ticks(div_rnd_up(nanos, TIME_SLICE));
+		sleep_ticks(div_rnd_up(nanos, QUANTUM));
 	}
 }
 
@@ -59,14 +60,14 @@ static enum interrupt_defer timer_interrupt(struct interrupt *intr,
 							void *intrframe_, 
 							struct register_state *registers)
 {
-	puts("TIME'S UP!!!");
-	halt();
 	enum interrupt_level old_level = disable_interrupts();
 	enum interrupt_defer action = INTRDEFR_NONE;
 	struct benign_interrupt_frame *frame = intrframe_;
 
 	ticks++;
 	if (++thread_ticks > TIME_SLICE) {
+		puts("Time's up!");
+		halt();
 		action = INTRDEFR_YIELD;
 		thread_ticks = 0;
 	}

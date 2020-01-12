@@ -14,6 +14,7 @@ enum page_allocation_flags {
 
 void *page_allocate_multiple(enum page_allocation_flags, size_t);
 void *page_allocate(enum page_allocation_flags);
+void *page_reserve(void *phys);
 void page_free(void *);
 
 void *get_user_base(void);

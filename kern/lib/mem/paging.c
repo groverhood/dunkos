@@ -2,12 +2,13 @@
 #include <paging.h>
 #include <memory.h>
 #include <pml4.h>
-#include <util/bitmap.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
 #include <algo.h>
 #include <synch.h>
+#include <util/bitmap.h>
+#include <util/debug.h>
 
 
 /* The page fault handler. */
@@ -41,8 +42,6 @@ static enum interrupt_defer page_fault(struct interrupt *intr,
 	return INTRDEFR_NONE;
 }
 
-extern void prep_paging_ia32e(void);
-
 struct page_pool {
 	size_t pages;
 	struct bitmap *occupancy_map;
@@ -53,6 +52,7 @@ struct page_pool {
 static void page_pool_init(struct page_pool *, size_t pages, void *base);
 static void *page_pool_alloc(struct page_pool *, size_t npages);
 static void page_pool_free(struct page_pool *, void *, size_t npages);
+static void page_pool_reserve(struct page_pool *, void *);
 static bool page_pool_contains(struct page_pool *, void *);
 
 static void page_pool_map(struct page_pool *, size_t *pml4);
@@ -140,6 +140,22 @@ void page_free(void *page)
 	page_pool_free(pool, frame, 1);
 }
 
+void *page_reserve(void *phys)
+{
+	void *kern = phys_to_kernel(phys);
+	if (kern >= get_kernel_base() && kern < (uint8_t *)get_kernel_base() + get_kernel_pages() * PAGESIZE) {
+		page_pool_reserve(&kernel_pool, phys);
+	} else if (kern >= get_user_base() && kern < (uint8_t *)get_user_base() + get_user_pages() * PAGESIZE) {
+		page_pool_reserve(&user_pool, phys);
+	} else {
+		printf("%p <! [%p <-> %p] nor [%p <-> %p]\n", kern, get_kernel_base(), 
+			(uint8_t *)get_kernel_base() + get_kernel_pages() * PAGESIZE, 
+			get_user_base(), (uint8_t *)get_user_base() + get_user_pages() * PAGESIZE);
+		halt();
+	}
+	
+	return phys_to_kernel(phys);
+}
 
 static void page_pool_init(struct page_pool *p, size_t pages, void *base)
 {
@@ -171,6 +187,13 @@ static void *page_pool_alloc(struct page_pool *p, size_t npages)
 	}
 
 	return page;
+}
+
+static void page_pool_reserve(struct page_pool *p, void *ph)
+{
+	size_t pgnum = ((uintptr_t)phys_to_kernel(ph) / PAGESIZE) - ((uintptr_t)p->base / PAGESIZE);
+	assert(!bitmap_all(p->occupancy_map, pgnum, 1, 1));
+	bitmap_set(p->occupancy_map, pgnum, 1, 1);
 }
 
 static void page_pool_free(struct page_pool *p, void *pg, size_t npages)
